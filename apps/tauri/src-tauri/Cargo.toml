@@ -1,0 +1,28 @@
+[package]
+name = "groundtruth-local"
+version = "0.1.0"
+description = "Offline-first desktop takeoff app"
+authors = ["GroundTruth"]
+edition = "2021"
+
+[lib]
+name = "groundtruth_local_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://groundtruth-local/contracts.schema.json",
+  "title": "GroundTruth Local Shared Contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "projectFolder": { "$ref": "#/$defs/ProjectFolderSchema" },
+    "api": { "$ref": "#/$defs/ApiContract" }
+  },
+  "required": ["projectFolder", "api"],
+  "$defs": {
+    "IsoDateTime": { "type": "string", "format": "date-time" },
+    "Uuid": { "type": "string", "format": "uuid" },
+    "TakeoffItemType": { "type": "string", "enum": ["area", "linear", "count", "annotation"] },
+    "TakeoffSource": { "type": "string", "enum": ["manual", "ai_candidate", "ai_accepted", "imported"] },
+    "ProjectFolderSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "extension": { "const": ".gtl" },
+        "requiredPaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "const": [
+            "project.sqlite",
+            "documents/originals/",
+            "documents/rendered-pages/",
+            "documents/ocr/",
+            "documents/thumbnails/",
+            "takeoff/layers.jsonl",
+            "takeoff/classifications.json",
+            "takeoff/formulas.json",
+            "takeoff/snapshots/",
+            "rag/chunks.jsonl",
+            "exports/excel/",
+            "exports/annotated-pdf/",
+            "audit/ai-runs.jsonl",
+            "audit/tool-calls.jsonl",
+            "audit/user-edits.jsonl"
+          ]
+        },
+        "alternativePaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "const": ["rag/qdrant/", "rag/qdrant_collection_id.txt"]
+        }
+      },
+      "required": ["extension", "requiredPaths", "alternativePaths"]
+    },
+    "ApiError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "details": { "type": "object", "additionalProperties": true },
+        "requestId": { "type": "string" }
+      },
+      "required": ["code", "message", "requestId"]
+    },
+    "ApiResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ok": { "type": "boolean" },
+        "data": {},
+        "error": { "$ref": "#/$defs/ApiError" }
+      },
+      "required": ["ok"]
+    },
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Uuid" },
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "createdAt": { "$ref": "#/$defs/IsoDateTime" },
+        "updatedAt": { "$ref": "#/$defs/IsoDateTime" }
+      },
+      "required": ["id", "name", "path", "createdAt", "updatedAt"]
+    },
+    "Document": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Uuid" },
+        "projectId": { "$ref": "#/$defs/Uuid" },
+        "filename": { "type": "string" },
+        "originalPath": { "type": "string" },
+        "createdAt": { "$ref": "#/$defs/IsoDateTime" }
+      },
+      "required": ["id", "projectId", "filename", "originalPath", "createdAt"]
+    },
+    "Sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Uuid" },
+        "documentId": { "$ref": "#/$defs/Uuid" },
+        "sheetNumber": { "type": "string" },
+        "pageIndex": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["id", "documentId", "sheetNumber", "pageIndex"]
+    },
+    "Classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Uuid" },
+        "name": { "type": "string" },
+        "color": { "type": "string" }
+      },
+      "required": ["id", "name", "color"]
+    },
+    "TakeoffItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Uuid" },
+        "sheetId": { "$ref": "#/$defs/Uuid" },
+        "classificationId": { "$ref": "#/$defs/Uuid" },
+        "type": { "$ref": "#/$defs/TakeoffItemType" },
+        "geometryJson": { "type": "object", "additionalProperties": true },
+        "source": { "$ref": "#/$defs/TakeoffSource" },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "scaleId": { "type": ["string", "null"] },
+        "quantityRaw": { "type": ["number", "null"] },
+        "quantityUnit": { "type": ["string", "null"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "$ref": "#/$defs/IsoDateTime" },
+        "updatedAt": { "$ref": "#/$defs/IsoDateTime" }
+      },
+      "required": ["id", "sheetId", "classificationId", "type", "geometryJson", "source", "confidence", "scaleId", "quantityRaw", "quantityUnit", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ApiContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "models": {
+          "type": "array",
+          "items": { "type": "string" },
+          "const": ["projects", "documents", "sheets", "sheet_text_blocks", "sheet_renders", "classifications", "takeoff_items", "takeoff_vertices", "formulas", "snapshots", "ai_runs", "tool_calls", "exports"]
+        }
+      },
+      "required": ["models"]
+    }
+  }
+}

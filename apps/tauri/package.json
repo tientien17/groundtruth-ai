@@ -1,0 +1,18 @@
+{
+  "name": "@groundtruth/tauri",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "clean": "tauri clean",
+    "lint": "echo 'No lint for Tauri (Rust handles this)'",
+    "typecheck": "echo 'No typecheck for Tauri (Rust handles this)'",
+    "test": "echo 'No test for Tauri shell'"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/cli": "^2.0.0"
+  },
+  "devDependencies": {}
+}

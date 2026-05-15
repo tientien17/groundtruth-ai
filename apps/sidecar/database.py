@@ -3,13 +3,16 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from models import (
+    AIAuditLog,
     AIRun,
+    AISettings,
     AuditLog,
     Base,
     Classification,
@@ -20,8 +23,10 @@ from models import (
     ProjectMetadata,
     Sheet,
     SheetRender,
+    SheetText,
     SheetTextBlock,
     Snapshot,
+    TakeoffGeometry,
     TakeoffItem,
     TakeoffVertex,
 )
@@ -85,12 +90,51 @@ def init_db(db_path: Path | None = None) -> Engine:
     engine = get_engine(db_path)
 
     Base.metadata.create_all(engine)
+    _init_sheet_text_index(engine)
 
     return engine
 
 
+def _init_sheet_text_index(engine: Engine) -> None:
+    """Create SQLite FTS index for keyword search over sheet_text."""
+    with engine.begin() as conn:
+        conn.exec_driver_sql(
+            """
+            CREATE VIRTUAL TABLE IF NOT EXISTS sheet_text_fts
+            USING fts5(text, content='sheet_text', content_rowid='rowid')
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TRIGGER IF NOT EXISTS sheet_text_ai AFTER INSERT ON sheet_text
+            BEGIN
+                INSERT INTO sheet_text_fts(rowid, text) VALUES (new.rowid, new.text);
+            END
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TRIGGER IF NOT EXISTS sheet_text_ad AFTER DELETE ON sheet_text
+            BEGIN
+                INSERT INTO sheet_text_fts(sheet_text_fts, rowid, text)
+                VALUES ('delete', old.rowid, old.text);
+            END
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TRIGGER IF NOT EXISTS sheet_text_au AFTER UPDATE ON sheet_text
+            BEGIN
+                INSERT INTO sheet_text_fts(sheet_text_fts, rowid, text)
+                VALUES ('delete', old.rowid, old.text);
+                INSERT INTO sheet_text_fts(rowid, text) VALUES (new.rowid, new.text);
+            END
+            """
+        )
+
+
 @contextmanager
-def get_session(db_path: Path | None = None) -> Session:
+def get_session(db_path: Path | None = None) -> Iterator[Session]:
     """Context manager that yields a SQLAlchemy Session.
 
     Usage:

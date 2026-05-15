@@ -10,7 +10,9 @@ import pytest
 
 from database import get_project_path, init_db
 from models import (
+    AIAuditLog,
     AIRun,
+    AISettings,
     AuditLog,
     Base,
     Classification,
@@ -58,6 +60,7 @@ REQUIRED_TABLES = {
     "sheet_text_blocks",
     "sheet_renders",
     "classifications",
+    "takeoff_geometries",
     "takeoff_items",
     "takeoff_vertices",
     "formulas",
@@ -66,6 +69,8 @@ REQUIRED_TABLES = {
     "tool_calls",
     "exports",
     "audit_log",
+    "ai_settings",
+    "ai_audit_log",
 }
 
 

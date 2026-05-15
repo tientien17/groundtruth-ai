@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import JSON, String, Text, ForeignKey
+from sqlalchemy import String, Text, ForeignKey
+from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -69,10 +70,13 @@ class Sheet(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id"), index=True)
     sheet_number: Mapped[str] = mapped_column(String(64))
+    sheet_title: Mapped[str | None] = mapped_column(String(512), default=None)
     page_index: Mapped[int] = mapped_column()
+    sheet_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
     document: Mapped["Document | None"] = relationship(back_populates="sheets")
     takeoff_items: Mapped[list["TakeoffItem"]] = relationship(back_populates="sheet")
+    text_entries: Mapped[list["SheetText"]] = relationship(back_populates="sheet")
 
 
 class SheetTextBlock(Base):
@@ -87,6 +91,25 @@ class SheetTextBlock(Base):
     bbox_y: Mapped[float] = mapped_column()
     bbox_w: Mapped[float] = mapped_column()
     bbox_h: Mapped[float] = mapped_column()
+
+
+class SheetText(Base):
+    """Searchable text span extracted from a sheet page with PDF-space bounds."""
+
+    __tablename__ = "sheet_text"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    sheet_id: Mapped[UUID] = mapped_column(ForeignKey("sheets.id"), index=True)
+    page_index: Mapped[int] = mapped_column(index=True)
+    text: Mapped[str] = mapped_column(Text())
+    bbox_x0: Mapped[float] = mapped_column()
+    bbox_y0: Mapped[float] = mapped_column()
+    bbox_x1: Mapped[float] = mapped_column()
+    bbox_y1: Mapped[float] = mapped_column()
+    source: Mapped[str] = mapped_column(String(32), default="native")
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    sheet: Mapped["Sheet | None"] = relationship(back_populates="text_entries")
 
 
 class SheetRender(Base):
@@ -107,8 +130,12 @@ class Classification(Base):
     __tablename__ = "classifications"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
+    project_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("projects.id"), index=True, default=None
+    )
     name: Mapped[str] = mapped_column(String(255))
     color: Mapped[str] = mapped_column(String(16))  # hex color e.g. "#FF0000"
+    unit: Mapped[str] = mapped_column(String(32), default="count")
 
 
 class TakeoffItem(Base):
@@ -118,8 +145,8 @@ class TakeoffItem(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     sheet_id: Mapped[UUID] = mapped_column(ForeignKey("sheets.id"), index=True)
-    classification_id: Mapped[UUID] = mapped_column(
-        ForeignKey("classifications.id"), index=True
+    classification_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("classifications.id"), index=True, default=None
     )
     type: Mapped[str] = mapped_column(
         String(32)
@@ -132,12 +159,36 @@ class TakeoffItem(Base):
     scale_id: Mapped[str | None] = mapped_column(String(64), default=None)
     quantity_raw: Mapped[float | None] = mapped_column(default=None)
     quantity_unit: Mapped[str | None] = mapped_column(String(32), default=None)
+    formulas: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     created_by: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     sheet: Mapped["Sheet | None"] = relationship(back_populates="takeoff_items")
+    geometry: Mapped["TakeoffGeometry | None"] = relationship(
+        back_populates="item", cascade="all, delete-orphan", uselist=False
+    )
     vertices: Mapped[list["TakeoffVertex"]] = relationship(back_populates="item")
+
+
+class TakeoffGeometry(Base):
+    """Persisted geometry payload used to compute a takeoff quantity."""
+
+    __tablename__ = "takeoff_geometries"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    takeoff_item_id: Mapped[UUID] = mapped_column(
+        ForeignKey("takeoff_items.id"), unique=True, index=True
+    )
+    geometry_type: Mapped[str] = mapped_column(String(32))  # point | path | polygon
+    points: Mapped[list[dict[str, float]]] = mapped_column(JSON, default=list)
+    holes: Mapped[list[list[dict[str, float]]]] = mapped_column(JSON, default=list)
+    scale: Mapped[float] = mapped_column(default=1.0)
+    scale_unit: Mapped[str] = mapped_column(String(32), default="ft")
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    item: Mapped["TakeoffItem | None"] = relationship(back_populates="geometry")
 
 
 class TakeoffVertex(Base):
@@ -239,4 +290,54 @@ class AuditLog(Base):
     target_type: Mapped[str | None] = mapped_column(String(128), default=None)
     target_id: Mapped[UUID | None] = mapped_column(default=None)
     details_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+
+# ── AI Tables ──────────────────────────────────────────────────────────────────
+
+
+class AISettings(Base):
+    """Per-project AI provider configuration."""
+
+    __tablename__ = "ai_settings"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    project_id: Mapped[UUID] = mapped_column(
+        ForeignKey("projects.id"), unique=True, index=True
+    )
+    provider: Mapped[str] = mapped_column(
+        String(64), default="ollama"
+    )  # "ollama" | "vllm" | "openai_compatible"
+    base_url: Mapped[str] = mapped_column(
+        String(1024), default="http://127.0.0.1:11434"
+    )
+    chat_model: Mapped[str] = mapped_column(String(255), default="llama3.2")
+    embedding_model: Mapped[str] = mapped_column(
+        String(255), default="nomic-embed-text"
+    )
+    extra_config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+
+class AIAuditLog(Base):
+    """Audit trail for all AI prompt/response pairs."""
+
+    __tablename__ = "ai_audit_log"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    project_id: Mapped[UUID] = mapped_column(
+        ForeignKey("projects.id"), index=True
+    )
+    provider: Mapped[str] = mapped_column(String(64))
+    model: Mapped[str] = mapped_column(String(255))
+    prompt: Mapped[str] = mapped_column(Text())
+    response: Mapped[str] = mapped_column(Text())
+    tokens_prompt: Mapped[int | None] = mapped_column(default=None)
+    tokens_completion: Mapped[int | None] = mapped_column(default=None)
+    duration_ms: Mapped[int] = mapped_column(default=0)
+    status: Mapped[str] = mapped_column(
+        String(32), default="success"
+    )  # "success" | "error"
+    error_message: Mapped[str | None] = mapped_column(Text(), default=None)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)

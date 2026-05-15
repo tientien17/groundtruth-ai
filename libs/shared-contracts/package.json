@@ -1,0 +1,12 @@
+{
+  "name": "@groundtruth-local/shared-contracts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./typescript/contracts.ts",
+    "./schema": "./schema.json"
+  },
+  "scripts": {
+    "verify": "python verify_contracts.py"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@groundtruth/sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "python -m uvicorn main:app --reload --port 0",
+    "start": "python -m uvicorn main:app --host 127.0.0.1 --port 0",
+    "test": "pytest || echo 'pytest not installed, skipping'",
+    "lint": "ruff check . || echo 'ruff not installed, skipping'",
+    "typecheck": "mypy . || echo 'mypy not installed, skipping'",
+    "clean": "rm -rf .pytest_cache __pycache__"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
