@@ -50,7 +50,7 @@ function Read-JsonVersion {
         throw "Version file not found: $RelativePath"
     }
 
-    $json = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $json = Get-Content -LiteralPath $path -Raw -Encoding utf8 | ConvertFrom-Json
     if (-not $json.version) {
         throw "Version not found in $RelativePath"
     }
@@ -69,7 +69,7 @@ function Read-RegexVersion {
         throw "Version file not found: $RelativePath"
     }
 
-    $content = Get-Content -LiteralPath $path -Raw
+    $content = Get-Content -LiteralPath $path -Raw -Encoding utf8
     $match = [regex]::Match($content, $Pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
     if (-not $match.Success) {
         throw "Version not found in $RelativePath"
@@ -117,7 +117,7 @@ function Get-FragmentText {
 
     $lines = New-Object System.Collections.Generic.List[string]
     foreach ($file in $files) {
-        $content = Get-Content -LiteralPath $file.FullName
+        $content = Get-Content -LiteralPath $file.FullName -Encoding utf8
         foreach ($line in $content) {
             if ($line.Trim().Length -gt 0) {
                 $lines.Add($line)
@@ -141,7 +141,7 @@ function Update-Changelog {
 
     $userLines = Get-FragmentText $userFragmentsDir
     $devLines = Get-FragmentText $devFragmentsDir
-    $existing = Get-Content -LiteralPath $changelogPath -Raw
+    $existing = Get-Content -LiteralPath $changelogPath -Raw -Encoding utf8
     $releaseBlock = @(
         "## [Unreleased]"
         ""
@@ -172,7 +172,7 @@ function Update-Changelog {
         return
     }
 
-    Set-Content -LiteralPath $changelogPath -Value $updated -NoNewline
+    Set-Content -LiteralPath $changelogPath -Value $updated -NoNewline -Encoding utf8
 }
 
 function Get-Installer {
@@ -215,7 +215,7 @@ function Write-Checksum {
         return $checksumPath
     }
 
-    Set-Content -LiteralPath $checksumPath -Value $line
+    Set-Content -LiteralPath $checksumPath -Value $line -Encoding utf8
     Write-Host "Checksum: $checksumPath"
     return $checksumPath
 }
@@ -270,6 +270,7 @@ function Invoke-CommitAndTag {
     Write-Host "Push skipped by design. Run git push and git push --tags manually after review."
 }
 
+if ($MyInvocation.InvocationName -ne '.') {
 Push-Location $repoRoot
 try {
     Write-Gate "1/10 Preflight"
@@ -316,4 +317,5 @@ try {
 }
 finally {
     Pop-Location
+}
 }
