@@ -1,36 +1,12 @@
 {
-  "active_plan": "D:\\Users\\magpa\\OneDrive\\Desktop\\Repositories\\civils-local-ai\\.sisyphus\\plans\\groundtruth-local-mvp.md",
-  "started_at": "2026-05-08T09:04:07.990Z",
+  "active_plan": "D:\\Users\\magpa\\OneDrive\\Desktop\\Repositories\\civils-local-ai\\.sisyphus\\plans\\windows-installer.md",
+  "started_at": "2026-05-15T06:28:59.943Z",
   "session_ids": [
-    "ses_1f93631a5ffedTcdNYbJ6kWLmO",
-    "ses_1f824ae70ffefjqPHa10w17txR",
-    "ses_1d6bdae7bffe6vxpSatZ6EftJv",
-    "ses_1d6b9c8dfffeh4fNSUJcvTZKU6"
+    "ses_1d5bdb1ecffej0Q9NgAhUvfXUP"
   ],
   "session_origins": {
-    "ses_1f93631a5ffedTcdNYbJ6kWLmO": "direct",
-    "ses_1f824ae70ffefjqPHa10w17txR": "direct",
-    "ses_1d6bdae7bffe6vxpSatZ6EftJv": "direct",
-    "ses_1d6b9c8dfffeh4fNSUJcvTZKU6": "direct"
+    "ses_1d5bdb1ecffej0Q9NgAhUvfXUP": "direct"
   },
-  "plan_name": "groundtruth-local-mvp",
-  "agent": "atlas",
-  "task_sessions": {
-    "final-wave:f1": {
-      "task_key": "final-wave:f1",
-      "task_label": "F1",
-      "task_title": "**Plan Compliance Audit** — `oracle`",
-      "session_id": "ses_1d5c2fbd0ffecSJh5ltK6Xqo18",
-      "agent": "oracle",
-      "updated_at": "2026-05-15T06:05:30.021Z"
-    },
-    "todo:9": {
-      "task_key": "todo:9",
-      "task_label": "9",
-      "task_title": "OCR/text extraction pipeline",
-      "session_id": "ses_1d5d4ffd3ffeI6T6yOSBHSjLkq",
-      "agent": "oracle",
-      "updated_at": "2026-05-15T05:48:40.125Z"
-    }
-  }
+  "plan_name": "windows-installer",
+  "agent": "atlas"
 }

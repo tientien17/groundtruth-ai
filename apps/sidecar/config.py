@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # ── OCR ───────────────────────────────────────────────────────────────────
 
     ocr_engine: str = "tesseract"  # "tesseract" | "ocrmypdf"
+    tesseract_path: Path | None = None
 
     # ── AI / Model Providers ─────────────────────────────────────────────────
 

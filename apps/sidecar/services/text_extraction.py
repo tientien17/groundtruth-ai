@@ -8,9 +8,27 @@ from typing import Any, cast
 from uuid import UUID, uuid4
 
 import fitz
+import pytesseract
 from sqlalchemy.orm import Session
 
+from config import Settings
 from models import Sheet, SheetText, SheetTextBlock
+
+
+def _configure_tesseract() -> None:
+    settings = Settings()
+    if settings.tesseract_path is None:
+        return
+
+    tesseract_path = settings.tesseract_path.expanduser()
+    if tesseract_path.is_dir():
+        tesseract_path = tesseract_path / "tesseract.exe"
+
+    if tesseract_path.exists():
+        pytesseract.pytesseract.tesseract_cmd = str(tesseract_path)
+
+
+_configure_tesseract()
 
 
 @dataclass(frozen=True)
@@ -179,7 +197,6 @@ def _extract_native_text(page: fitz.Page) -> tuple[list[ExtractedTextEntry], lis
 
 
 def _extract_ocr_text(page: fitz.Page, *, zoom: float) -> tuple[list[ExtractedTextEntry], list[ExtractedTextBlock]]:
-    import pytesseract
     from PIL import Image
 
     pixmap = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)

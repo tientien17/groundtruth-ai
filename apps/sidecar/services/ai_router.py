@@ -39,6 +39,15 @@ class ProviderConfig:
     embedding_model: str
 
 
+@dataclass(frozen=True)
+class OllamaStatus:
+    """Reachability and model availability for Ollama."""
+
+    running: bool
+    models: set[str] = field(default_factory=set)
+    error: str | None = None
+
+
 # ── Sensitive-info masking ───────────────────────────────────────────────────
 
 _MASK_KEYS = frozenset({"api_key", "apikey", "secret", "password", "token", "authorization"})
@@ -129,6 +138,44 @@ async def _call_ollama(
         provider="ollama",
         raw=body,
     )
+
+
+async def get_ollama_status(
+    base_url: str,
+    *,
+    timeout: float = 5.0,
+) -> OllamaStatus:
+    """Return whether Ollama is reachable and which models are installed."""
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.get(f"{base_url}/api/tags")
+            resp.raise_for_status()
+    except Exception as exc:
+        return OllamaStatus(running=False, error=str(exc))
+
+    body = resp.json()
+    models = {
+        str(model.get("name", "")).split(":", 1)[0]
+        for model in body.get("models", [])
+        if model.get("name")
+    }
+    models.update(
+        str(model.get("model", "")).split(":", 1)[0]
+        for model in body.get("models", [])
+        if model.get("model")
+    )
+    return OllamaStatus(running=True, models=models)
+
+
+async def ollama_model_exists(
+    base_url: str,
+    model: str,
+    *,
+    timeout: float = 5.0,
+) -> bool:
+    """Check whether a named model is installed in Ollama."""
+    status = await get_ollama_status(base_url, timeout=timeout)
+    return status.running and model.split(":", 1)[0] in status.models
 
 
 async def _call_openai_compatible(

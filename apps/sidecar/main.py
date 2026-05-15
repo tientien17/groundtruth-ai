@@ -13,6 +13,7 @@ from api.endpoints.documents import router as documents_router
 from api.endpoints.export import router as export_router  # type: ignore[reportMissingImports]
 from api.endpoints.sheets import router as sheets_router
 from api.endpoints.search import router as search_router  # type: ignore[reportMissingImports]
+from api.endpoints.setup import router as setup_router
 from api.endpoints.snapshots import router as snapshots_router  # type: ignore[reportMissingImports]
 from api.endpoints.takeoff import router as takeoff_router
 from api.endpoints.visual_search import router as visual_search_router
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(documents_router)
     app.include_router(export_router)
     app.include_router(search_router)
+    app.include_router(setup_router)
     app.include_router(sheets_router)
     app.include_router(snapshots_router)
     app.include_router(takeoff_router)

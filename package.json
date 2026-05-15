@@ -13,6 +13,7 @@
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "build": "pnpm -r run build",
+    "bundle": "pnpm --filter @groundtruth/frontend build && pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup_tesseract_resource.ps1 && pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/bundle_sidecar.ps1 && pnpm --filter @groundtruth/tauri build",
     "clean": "pnpm -r run clean"
   },
   "engines": {
