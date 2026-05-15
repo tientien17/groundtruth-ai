@@ -136,8 +136,8 @@ GroundTruthLocal-Setup.exe (NSIS installer)
 - [x] 2.2 Create `SetupWizard` React component with step-by-step progress
 - [x] 2.3 Implement Ollama connectivity check (ping localhost:11434)
 - [x] 2.4 Add `POST /setup/models` endpoint to sidecar for model pull progress
-- [ ] 2.5 Wire UI to sidecar pull API with real-time progress bars
-- [ ] 2.6 Verify models `llama3.2` and `nomic-embed-text` are ready before completion
+- [x] 2.5 Wire UI to sidecar pull API with real-time progress bars
+- [x] 2.6 Verify models `llama3.2` and `nomic-embed-text` are ready before completion
 
 ### Phase 3: Ollama Auto-Install
 - [x] 3.1 Research/Download Ollama Windows installer binary

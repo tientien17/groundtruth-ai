@@ -23,6 +23,8 @@ type SetupWizardProps = {
   onReady: () => void
 }
 
+const REQUIRED_MODELS = ['llama3.2', 'nomic-embed-text'] as const
+
 export function SetupWizard({ onReady }: SetupWizardProps) {
   const [status, setStatus] = useState<SetupStatus | null>(null)
   const [isPulling, setIsPulling] = useState(false)
@@ -38,7 +40,19 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
         if (cancelled) return
         setStatus(nextStatus)
         setError(null)
-        if (!nextStatus.required) {
+        const allModelsReady = requiredModelsReady(nextStatus)
+        const hasActivePull = requiredModelEntries(nextStatus).some(([, info]) => isActiveProgress(info.progress))
+        const failedProgress = requiredModelEntries(nextStatus).find(([, info]) => info.progress?.status === 'error')
+
+        setIsPulling(hasActivePull)
+        if (failedProgress) {
+          const [model, info] = failedProgress
+          setError(info.progress?.error ?? `${model} download failed`)
+        } else {
+          setError(null)
+        }
+
+        if (allModelsReady) {
           onReady()
         }
       } catch (err) {
@@ -76,19 +90,25 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
     setIsPulling(true)
     setError(null)
     try {
-      const models = status ? missingModels(status) : undefined
-      await fetch(`${SIDECAR_URL}/setup/models/pull`, {
+      const models = status ? missingModels(status) : [...REQUIRED_MODELS]
+      const response = await fetch(`${SIDECAR_URL}/setup/models/pull`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ models }),
       })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok || body.error) {
+        throw new Error(body.error ?? `Model download failed: ${response.status}`)
+      }
+      setStatus(await fetchSetupStatus())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Model download failed')
       setIsPulling(false)
     }
   }
 
-  const models = status ? Object.entries(status.models) : []
+  const models = status ? requiredModelEntries(status) : REQUIRED_MODELS.map((model) => [model, null] as const)
+  const setupReady = requiredModelsReady(status)
 
   return (
     <main style={styles.shell}>
@@ -112,13 +132,16 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
 
         <div style={styles.list}>
           {models.map(([model, info]) => {
-            const progress = info.progress
-            const percent = info.installed ? 100 : progress?.percent ?? 0
+            const progress = info?.progress
+            const percent = getModelPercent(info)
+            const displayStatus = getModelStatus(info)
             return (
               <div key={model} style={styles.modelRow}>
                 <div style={styles.modelHeader}>
                   <strong>{model}</strong>
-                  <span>{info.installed ? 'Installed' : progress?.status ?? 'Missing'}</span>
+                  <span style={displayStatus === 'failed' ? styles.error : undefined}>
+                    {displayStatus} · {percent}%
+                  </span>
                 </div>
                 <div style={styles.progressTrack}>
                   <div style={{ ...styles.progressFill, width: `${percent}%` }} />
@@ -132,10 +155,14 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
         <button
           type="button"
           onClick={startPull}
-          disabled={!status?.ollama.running || missingModels(status).length === 0 || isPulling}
+          disabled={!status?.ollama.running || missingModels(status).length === 0 || isPulling || setupReady}
           style={styles.button}
         >
           {isPulling ? 'Downloading models…' : 'Download missing models'}
+        </button>
+
+        <button type="button" onClick={onReady} disabled={!setupReady} style={{ ...styles.button, ...styles.secondaryButton }}>
+          Get Started
         </button>
       </section>
     </main>
@@ -160,9 +187,34 @@ async function fetchSetupStatus(): Promise<SetupStatus> {
 
 function missingModels(status: SetupStatus | null): string[] {
   if (!status) return []
-  return Object.entries(status.models)
+  return requiredModelEntries(status)
     .filter(([, info]) => !info.installed)
     .map(([model]) => model)
+}
+
+function requiredModelEntries(status: SetupStatus): Array<[string, { installed: boolean; progress?: ModelProgress | null }]> {
+  return REQUIRED_MODELS.map((model) => [model, status.models[model] ?? { installed: false }])
+}
+
+function requiredModelsReady(status: SetupStatus | null): boolean {
+  return Boolean(status?.ollama.running && status && requiredModelEntries(status).every(([, info]) => info.installed))
+}
+
+function isActiveProgress(progress?: ModelProgress | null): boolean {
+  return progress?.status === 'queued' || progress?.status === 'downloading' || progress?.status === 'pulling'
+}
+
+function getModelPercent(info: { installed: boolean; progress?: ModelProgress | null } | null): number {
+  if (info?.installed) return 100
+  return Math.max(0, Math.min(100, info?.progress?.percent ?? 0))
+}
+
+function getModelStatus(info: { installed: boolean; progress?: ModelProgress | null } | null): string {
+  if (info?.installed) return 'ready'
+  if (info?.progress?.status === 'error') return 'failed'
+  if ((info?.progress?.percent ?? 0) >= 100 || info?.progress?.status === 'complete') return 'verifying'
+  if (isActiveProgress(info?.progress)) return info?.progress?.status === 'queued' ? 'queued' : 'downloading'
+  return 'queued'
 }
 
 const styles = {
@@ -177,5 +229,6 @@ const styles = {
   progressTrack: { height: 10, overflow: 'hidden', borderRadius: 999, background: '#334155' },
   progressFill: { height: '100%', borderRadius: 999, background: '#22c55e', transition: 'width 200ms ease' },
   button: { width: '100%', padding: 14, borderRadius: 12, border: 0, background: '#38bdf8', fontWeight: 700 },
+  secondaryButton: { marginTop: 12, background: '#22c55e' },
   error: { color: '#fca5a5' },
 }

@@ -35,3 +35,8 @@
 - Root `pnpm bundle` runs frontend build, Tesseract resource setup, Windows PowerShell sidecar bundling, then `@groundtruth/tauri build`.
 - Packaging audit passed for configured resources, Ollama installer, Tesseract executable/tessdata, installer icon, and bundle script wiring.
 - Final Tauri build is blocked in this environment because `cargo` is not installed (`cargo metadata ... program not found`).
+
+## [2026-05-15] Setup wizard model progress
+- SetupWizard now renders fixed rows for llama3.2 and nomic-embed-text, maps sidecar progress percent into per-model bars, and shows queued/downloading/verifying/ready/failed states.
+- Get Started remains disabled until sidecar setup status reports Ollama running and both required models installed=true; 100% pull progress alone maps to verifying until status confirms install.
+- Active pull polling runs every 1s and failed progress surfaces progress.error in the UI.
