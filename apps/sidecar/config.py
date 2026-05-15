@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     embedding_model: str = "nomic-embed-text"
     chat_model: str = "llama3.2"
 
+    @property
+    def provider_config_path(self) -> Path:
+        """Path to the global provider config JSON file."""
+        return self.storage_path / "provider_config.json"
+
     # ── Debug ───────────────────────────────────────────────────────────────────
 
     debug: bool = False

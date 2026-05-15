@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import subprocess
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -24,10 +26,65 @@ class PullModelsRequest(BaseModel):
     models: list[str] = Field(default_factory=lambda: list(REQUIRED_MODELS))
 
 
+class ProviderConfigRequest(BaseModel):
+    """Cloud AI provider configuration submitted during setup."""
+
+    provider: str = Field(default="openai_compatible", pattern=r"^(openai_compatible|vllm)$")
+    base_url: str = Field(..., max_length=2048)
+    api_key: str | None = Field(default=None, max_length=2048)
+    chat_model: str = Field(default="gpt-4o", max_length=255)
+    embedding_model: str = Field(default="text-embedding-3-small", max_length=255)
+
+
+# ── Global provider config persistence ─────────────────────────────────────
+
+
+def _read_global_provider_config(config_path: Path) -> dict[str, Any] | None:
+    """Read the global provider config JSON file. Returns None if missing."""
+    if not config_path.exists():
+        return None
+    try:
+        raw = config_path.read_text(encoding="utf-8")
+        return json.loads(raw)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _write_global_provider_config(config_path: Path, data: dict[str, Any]) -> None:
+    """Write the global provider config JSON file atomically."""
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = config_path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    tmp.replace(config_path)
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────
+
+
 @router.get("/status")
 async def setup_status(request: Request) -> dict[str, Any]:
-    """Check Ollama reachability, required model presence, and pull progress."""
+    """Check setup readiness — either Ollama (local) or a cloud provider config."""
     settings = request.app.state.settings
+
+    # Read global cloud provider config
+    cloud_config = _read_global_provider_config(settings.provider_config_path)
+
+    # Cloud provider configured — ready to go
+    if cloud_config and cloud_config.get("base_url"):
+        return {
+            "required": False,
+            "cloud_provider": {
+                "configured": True,
+                "provider": cloud_config.get("provider", "openai_compatible"),
+                "base_url": cloud_config.get("base_url", ""),
+                "chat_model": cloud_config.get("chat_model", ""),
+                "embedding_model": cloud_config.get("embedding_model", ""),
+            },
+            "ollama": {"running": False, "error": None},
+            "models": {},
+        }
+
+    # No cloud config — fall back to local Ollama
     ollama = await get_ollama_status(settings.ollama_url)
     models = {
         model: {
@@ -38,12 +95,33 @@ async def setup_status(request: Request) -> dict[str, Any]:
     }
     return {
         "required": not (ollama.running and all(item["installed"] for item in models.values())),
+        "cloud_provider": {"configured": False},
         "ollama": {
             "running": ollama.running,
             "error": ollama.error,
         },
         "models": models,
     }
+
+
+@router.get("/provider")
+async def get_global_provider(request: Request) -> dict[str, Any]:
+    """Return the current global provider config (masked)."""
+    settings = request.app.state.settings
+    config = _read_global_provider_config(settings.provider_config_path)
+    if config is None:
+        return {"configured": False}
+    masked = {k: (v if k != "api_key" else "***") for k, v in config.items()}
+    return {"configured": True, **masked}
+
+
+@router.post("/provider")
+async def set_global_provider(body: ProviderConfigRequest, request: Request) -> dict[str, Any]:
+    """Save a global cloud AI provider config so the app can skip local setup."""
+    settings = request.app.state.settings
+    data = body.model_dump(exclude_none=True)
+    _write_global_provider_config(settings.provider_config_path, data)
+    return {"saved": True, "provider": body.provider}
 
 
 @router.post("/models/pull")

@@ -1,6 +1,7 @@
 """Centralized AI router for local LLM providers (Ollama, vLLM, OpenAI-compatible)."""
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -73,11 +74,19 @@ def get_provider_config(
     project_id: UUID,
     db_path: Path,
 ) -> ProviderConfig:
-    """Load AI settings for a project, falling back to global defaults."""
+    """Load AI settings for a project, falling back to global defaults.
+
+    Fallback chain:
+    1. Per-project AISettings (DB)
+    2. Global provider config JSON (written by setup wizard)
+    3. Environment-variable defaults (Settings)
+    """
     from config import Settings
 
     defaults = Settings()
+    config_path = defaults.provider_config_path
 
+    # 1. Per-project settings in DB
     with get_session(db_path) as session:
         settings_row = (
             session.query(AISettings)
@@ -93,12 +102,34 @@ def get_provider_config(
             embedding_model=settings_row.embedding_model,
         )
 
+    # 2. Global provider config (written by setup wizard)
+    global_config = _read_global_provider_config(config_path)
+    if global_config and global_config.get("base_url"):
+        return ProviderConfig(
+            provider=global_config.get("provider", "openai_compatible"),
+            base_url=global_config["base_url"],
+            chat_model=global_config.get("chat_model", defaults.chat_model),
+            embedding_model=global_config.get("embedding_model", defaults.embedding_model),
+        )
+
+    # 3. Environment-variable defaults
     return ProviderConfig(
         provider="ollama",
         base_url=defaults.ollama_url,
         chat_model=defaults.chat_model,
         embedding_model=defaults.embedding_model,
     )
+
+
+def _read_global_provider_config(config_path: Path) -> dict[str, Any] | None:
+    """Read the global provider config JSON file. Returns None if missing."""
+    if not config_path.exists():
+        return None
+    try:
+        raw = config_path.read_text(encoding="utf-8")
+        return json.loads(raw)
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 # ── Provider dispatch ────────────────────────────────────────────────────────
