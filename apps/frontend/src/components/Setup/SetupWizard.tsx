@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-const SIDECAR_URL = 'http://127.0.0.1:8765'
+const baseUrl = (port: number) => `http://127.0.0.1:${port}`
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -32,6 +32,7 @@ type SetupMode = 'local' | 'cloud'
 
 type SetupWizardProps = {
   onReady: () => void
+  sidecarPort?: number
 }
 
 type CloudProviderForm = {
@@ -54,7 +55,8 @@ const INITIAL_CLOUD_FORM: CloudProviderForm = {
 
 // ── Component ──────────────────────────────────────────────────────────
 
-export function SetupWizard({ onReady }: SetupWizardProps) {
+export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
+  const SIDECAR_URL = baseUrl(sidecarPort)
   const [status, setStatus] = useState<SetupStatus | null>(null)
   const [mode, setMode] = useState<SetupMode | null>(null)
   const [isPulling, setIsPulling] = useState(false)
@@ -70,7 +72,7 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
 
     async function refresh() {
       try {
-        const nextStatus = await fetchSetupStatus()
+        const nextStatus = await fetchSetupStatus(sidecarPort)
         if (cancelled) return
         setStatus(nextStatus)
         setError(null)
@@ -100,14 +102,14 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [mode, isPulling, isInstallingOllama, onReady])
+  }, [mode, isPulling, isInstallingOllama, onReady, sidecarPort])
 
   // Check initial status on mount — if cloud already configured, we're done
   useEffect(() => {
     let cancelled = false
     async function check() {
       try {
-        const s = await fetchSetupStatus()
+        const s = await fetchSetupStatus(sidecarPort)
         if (cancelled) return
         if (s.cloud_provider?.configured) {
           onReady()
@@ -120,7 +122,7 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
     }
     void check()
     return () => { cancelled = true }
-  }, [onReady])
+  }, [onReady, sidecarPort])
 
   const startOllamaInstall = useCallback(async () => {
     setIsInstallingOllama(true)
@@ -131,14 +133,14 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
       if (!response.ok || body.error) {
         throw new Error(body.error ?? `Ollama install failed: ${response.status}`)
       }
-      await waitForOllama()
-      setStatus(await fetchSetupStatus())
+      await waitForOllama(sidecarPort)
+      setStatus(await fetchSetupStatus(sidecarPort))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ollama install failed')
     } finally {
       setIsInstallingOllama(false)
     }
-  }, [])
+  }, [sidecarPort])
 
   const startPull = useCallback(async () => {
     setIsPulling(true)
@@ -154,12 +156,12 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
       if (!response.ok || body.error) {
         throw new Error(body.error ?? `Model download failed: ${response.status}`)
       }
-      setStatus(await fetchSetupStatus())
+      setStatus(await fetchSetupStatus(sidecarPort))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Model download failed')
       setIsPulling(false)
     }
-  }, [status])
+  }, [status, sidecarPort])
 
   const saveCloudProvider = useCallback(async () => {
     if (!cloudForm.base_url.trim()) {
@@ -178,49 +180,57 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
       if (cloudForm.api_key.trim()) {
         payload.api_key = cloudForm.api_key
       }
-
-      const response = await fetch(`${SIDECAR_URL}/setup/provider`, {
+      const response = await fetch(`${SIDECAR_URL}/setup/cloud-provider`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok || body.error) {
-        throw new Error(body.error ?? `Save failed: ${response.status}`)
+        throw new Error(body.error ?? `Cloud provider setup failed: ${response.status}`)
       }
       onReady()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save provider config')
+      setError(err instanceof Error ? err.message : 'Cloud provider setup failed')
+    } finally {
       setIsSavingCloud(false)
     }
-  }, [cloudForm, onReady])
+  }, [cloudForm, onReady, sidecarPort])
 
-  // ── Mode picker ──────────────────────────────────────────────────────
+  // ── Mode selection ───────────────────────────────────────────────────
 
   if (mode === null) {
     return (
-      <main style={styles.shell}>
-        <section style={styles.card}>
-          <p style={styles.eyebrow}>First-run setup</p>
-          <h1 style={styles.title}>Choose your AI provider</h1>
-          <p style={styles.copy}>
+      <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
+        <section className="w-full max-w-[560px] mx-4 p-8 rounded-3xl bg-slate-800">
+          <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">First-run setup</p>
+          <h1 className="mt-2 mb-0 text-3xl font-semibold">Choose your AI provider</h1>
+          <p className="text-slate-300 leading-relaxed mt-3">
             GroundTruth Local works with local models (Ollama) or any OpenAI-compatible
             endpoint — including LM Studio, vLLM, cloud providers, or a remote Ollama
             instance.
           </p>
 
-          {error ? <p style={styles.error}>{error}</p> : null}
+          {error ? <p className="text-error mt-4 p-3 rounded bg-error-light">{error}</p> : null}
 
-          <div style={{ display: 'grid', gap: 16, marginTop: 24 }}>
-            <button type="button" onClick={() => setMode('local')} style={styles.choiceCard}>
-              <strong style={{ fontSize: 18 }}>Local AI</strong>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>
+          <div className="grid gap-4 mt-6">
+            <button 
+              type="button" 
+              onClick={() => setMode('local')} 
+              className="block w-full p-5 rounded-2xl border-2 border-slate-600 bg-slate-700 hover:bg-slate-600 hover:border-slate-500 cursor-pointer text-left transition-colors"
+            >
+              <strong className="block text-lg font-semibold text-slate-50">Local AI</strong>
+              <span className="block text-sm text-slate-400 mt-1">
                 Install Ollama and download models to run entirely on your machine
               </span>
             </button>
-            <button type="button" onClick={() => setMode('cloud')} style={styles.choiceCard}>
-              <strong style={{ fontSize: 18 }}>Connect existing provider</strong>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>
+            <button 
+              type="button" 
+              onClick={() => setMode('cloud')} 
+              className="block w-full p-5 rounded-2xl border-2 border-slate-600 bg-slate-700 hover:bg-slate-600 hover:border-slate-500 cursor-pointer text-left transition-colors"
+            >
+              <strong className="block text-lg font-semibold text-slate-50">Connect existing provider</strong>
+              <span className="block text-sm text-slate-400 mt-1">
                 Use any OpenAI-compatible API — LM Studio, vLLM, OpenAI, or remote Ollama
               </span>
             </button>
@@ -234,72 +244,72 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
 
   if (mode === 'cloud') {
     return (
-      <main style={styles.shell}>
-        <section style={styles.card}>
-          <p style={styles.eyebrow}>Connect provider</p>
-          <h1 style={{ ...styles.title, fontSize: 28 }}>OpenAI-compatible endpoint</h1>
-          <p style={styles.copy}>
+      <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
+        <section className="w-full max-w-[560px] mx-4 p-8 rounded-3xl bg-slate-800">
+          <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Connect provider</p>
+          <h1 className="mt-2 mb-0 text-[28px] font-semibold">OpenAI-compatible endpoint</h1>
+          <p className="text-slate-300 leading-relaxed mt-3">
             Enter your provider details. Works with{' '}
             <strong>LM Studio, Ollama (remote), vLLM, OpenAI,</strong> or any API
             that speaks the OpenAI chat completions format.
           </p>
 
-          {error ? <p style={styles.error}>{error}</p> : null}
+          {error ? <p className="text-error mt-4 p-3 rounded bg-error-light">{error}</p> : null}
 
-          <div style={{ display: 'grid', gap: 16, marginTop: 24 }}>
-            <label style={styles.fieldLabel}>
+          <div className="grid gap-4 mt-6">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
               Provider type
               <select
                 value={cloudForm.provider}
                 onChange={(e) => setCloudForm({ ...cloudForm, provider: e.target.value })}
-                style={styles.input}
+                className="input"
               >
                 <option value="openai_compatible">OpenAI-compatible</option>
                 <option value="vllm">vLLM</option>
               </select>
             </label>
 
-            <label style={styles.fieldLabel}>
-              Base URL *
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Base URL
               <input
-                type="url"
+                type="text"
                 value={cloudForm.base_url}
                 onChange={(e) => setCloudForm({ ...cloudForm, base_url: e.target.value })}
                 placeholder="http://localhost:1234/v1"
-                style={styles.input}
+                className="input"
               />
             </label>
 
-            <label style={styles.fieldLabel}>
-              API key
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              API Key (optional)
               <input
                 type="password"
                 value={cloudForm.api_key}
                 onChange={(e) => setCloudForm({ ...cloudForm, api_key: e.target.value })}
-                placeholder="Optional — leave blank if not required"
-                style={styles.input}
+                placeholder="sk-..."
+                className="input"
               />
             </label>
 
-            <label style={styles.fieldLabel}>
-              Chat model *
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Chat model
               <input
                 type="text"
                 value={cloudForm.chat_model}
                 onChange={(e) => setCloudForm({ ...cloudForm, chat_model: e.target.value })}
                 placeholder="gpt-4o"
-                style={styles.input}
+                className="input"
               />
             </label>
 
-            <label style={styles.fieldLabel}>
-              Embedding model *
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Embedding model
               <input
                 type="text"
                 value={cloudForm.embedding_model}
                 onChange={(e) => setCloudForm({ ...cloudForm, embedding_model: e.target.value })}
                 placeholder="text-embedding-3-small"
-                style={styles.input}
+                className="input"
               />
             </label>
           </div>
@@ -308,7 +318,7 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
             type="button"
             onClick={saveCloudProvider}
             disabled={isSavingCloud || !cloudForm.base_url || !cloudForm.chat_model || !cloudForm.embedding_model}
-            style={{ ...styles.button, marginTop: 24 }}
+            className="btn btn-primary w-full mt-6 py-3.5 text-base"
           >
             {isSavingCloud ? 'Saving…' : 'Connect & continue'}
           </button>
@@ -316,7 +326,7 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
           <button
             type="button"
             onClick={() => { setMode('local'); setError(null); setIsSavingCloud(false) }}
-            style={{ ...styles.linkButton, marginTop: 12 }}
+            className="block w-full mt-3 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
           >
             ← Use local AI instead
           </button>
@@ -331,67 +341,84 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
   const setupReady = requiredModelsReady(status)
 
   return (
-    <main style={styles.shell}>
-      <section style={styles.card}>
-        <p style={styles.eyebrow}>Local AI setup</p>
-        <h1 style={styles.title}>Prepare local models</h1>
-        <p style={styles.copy}>
+    <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
+      <section className="w-full max-w-[560px] mx-4 p-8 rounded-3xl bg-slate-800">
+        <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Local AI setup</p>
+        <h1 className="mt-2 mb-0 text-3xl font-semibold">Prepare local models</h1>
+        <p className="text-slate-300 leading-relaxed mt-3">
           GroundTruth Local needs Ollama plus <strong>llama3.2</strong> and{' '}
           <strong>nomic-embed-text</strong> before AI features run.
         </p>
 
-        {error ? <p style={styles.error}>{error}</p> : null}
+        {error ? <p className="text-error mt-4 p-3 rounded bg-error-light">{error}</p> : null}
         {status && !status.ollama.running ? (
-          <p style={styles.error}>Ollama is not reachable. Install Ollama, then setup continues.</p>
+          <p className="text-error mt-4 p-3 rounded bg-error-light">Ollama is not reachable. Install Ollama, then setup continues.</p>
         ) : null}
 
         {status && !status.ollama.running ? (
-          <button type="button" onClick={startOllamaInstall} disabled={isInstallingOllama} style={styles.button}>
+          <button 
+            type="button" 
+            onClick={startOllamaInstall} 
+            disabled={isInstallingOllama} 
+            className="btn btn-primary w-full mt-6 py-3.5 text-base"
+          >
             {isInstallingOllama ? 'Installing Ollama…' : 'Install Ollama'}
           </button>
         ) : null}
 
-        <div style={styles.list}>
+        <div className="grid gap-4 my-6">
           {models.map(([model, info]) => {
             const progress = info?.progress
             const percent = getModelPercent(info)
             const displayStatus = getModelStatus(info)
             return (
-              <div key={model} style={styles.modelRow}>
-                <div style={styles.modelHeader}>
+              <div key={model} className="grid gap-2">
+                <div className="flex justify-between items-center text-slate-200">
                   <strong>{model}</strong>
-                  <span style={displayStatus === 'failed' ? styles.error : undefined}>
-                    {displayStatus} · {percent}%
+                  <span className={displayStatus === 'failed' ? 'text-error' : ''}>
+                    {displayStatus}
                   </span>
                 </div>
-                <div style={styles.progressTrack}>
-                  <div style={{ ...styles.progressFill, width: `${percent}%` }} />
-                </div>
-                {progress?.error ? <small style={styles.error}>{progress.error}</small> : null}
+                {progress && !info?.installed ? (
+                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-600">
+                    <div
+                      className="h-full bg-sky-400 transition-all duration-300"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                ) : null}
               </div>
             )
           })}
         </div>
 
-        <button
-          type="button"
-          onClick={startPull}
-          disabled={!status?.ollama.running || missingModels(status).length === 0 || isPulling || setupReady}
-          style={styles.button}
-        >
-          {isPulling ? 'Downloading models…' : 'Download missing models'}
-        </button>
+        {status?.ollama.running && !setupReady ? (
+          <button
+            type="button"
+            onClick={startPull}
+            disabled={isPulling}
+            className="btn btn-primary w-full py-3.5 text-base"
+          >
+            {isPulling ? 'Downloading models…' : 'Download models'}
+          </button>
+        ) : null}
 
-        <button type="button" onClick={onReady} disabled={!setupReady} style={{ ...styles.button, ...styles.secondaryButton }}>
-          Get Started
-        </button>
+        {setupReady ? (
+          <button
+            type="button"
+            onClick={onReady}
+            className="btn btn-primary w-full py-3.5 text-base"
+          >
+            Continue to app
+          </button>
+        ) : null}
 
         <button
           type="button"
           onClick={() => { setMode('cloud'); setError(null); setIsPulling(false) }}
-          style={{ ...styles.linkButton, marginTop: 12 }}
+          className="block w-full mt-3 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
         >
-          Connect a different provider instead →
+          Use cloud provider instead →
         </button>
       </section>
     </main>
@@ -400,18 +427,18 @@ export function SetupWizard({ onReady }: SetupWizardProps) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function waitForOllama(timeoutMs = 60000): Promise<void> {
+async function waitForOllama(sidecarPort = 8765, timeoutMs = 60000): Promise<void> {
   const startedAt = Date.now()
   while (Date.now() - startedAt < timeoutMs) {
-    const status: SetupStatus = await fetchSetupStatus()
+    const status: SetupStatus = await fetchSetupStatus(sidecarPort)
     if (status.ollama.running) return
     await new Promise((resolve) => window.setTimeout(resolve, 1000))
   }
   throw new Error('Ollama installed, but service did not respond before timeout')
 }
 
-async function fetchSetupStatus(): Promise<SetupStatus> {
-  const response = await fetch(`${SIDECAR_URL}/setup/status`)
+async function fetchSetupStatus(sidecarPort: number): Promise<SetupStatus> {
+  const response = await fetch(`http://127.0.0.1:${sidecarPort}/setup/status`)
   if (!response.ok) throw new Error(`Setup status failed: ${response.status}`)
   return response.json()
 }
@@ -452,83 +479,4 @@ function getModelStatus(info: { installed: boolean; progress?: ModelProgress | n
   if ((info?.progress?.percent ?? 0) >= 100 || info?.progress?.status === 'complete') return 'verifying'
   if (isActiveProgress(info?.progress)) return info?.progress?.status === 'queued' ? 'queued' : 'downloading'
   return 'queued'
-}
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const styles: Record<string, React.CSSProperties> = {
-  shell: { minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0f172a', color: '#f8fafc' },
-  card: { width: 'min(560px, calc(100vw - 32px))', padding: 32, borderRadius: 24, background: '#111827' },
-  eyebrow: { margin: 0, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: 1.5 } as React.CSSProperties,
-  title: { margin: '8px 0', fontSize: 34 },
-  copy: { color: '#cbd5e1', lineHeight: 1.6 },
-
-  choiceCard: {
-    display: 'block',
-    width: '100%',
-    padding: 20,
-    borderRadius: 16,
-    border: '2px solid #334155',
-    background: '#1e293b',
-    cursor: 'pointer',
-    textAlign: 'left',
-  } as React.CSSProperties,
-
-  button: {
-    width: '100%',
-    padding: 14,
-    borderRadius: 12,
-    border: 0,
-    background: '#38bdf8',
-    fontWeight: 700,
-    cursor: 'pointer',
-  } as React.CSSProperties,
-
-  secondaryButton: {
-    background: '#334155',
-    color: '#e2e8f0',
-  } as React.CSSProperties,
-
-  linkButton: {
-    display: 'block',
-    width: '100%',
-    padding: 10,
-    borderRadius: 12,
-    border: 0,
-    background: 'transparent',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: 14,
-    textDecoration: 'underline',
-  } as React.CSSProperties,
-
-  fieldLabel: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  } as React.CSSProperties,
-
-  input: {
-    width: '100%',
-    boxSizing: 'border-box',
-    padding: 12,
-    borderRadius: 10,
-    border: '1px solid #334155',
-    background: '#0f172a',
-    color: '#f1f5f9',
-    fontSize: 14,
-    outline: 'none',
-  } as React.CSSProperties,
-
-  list: { display: 'grid', gap: 16, margin: '24px 0' },
-  modelRow: { display: 'grid', gap: 8 },
-  modelHeader: { display: 'flex', justifyContent: 'space-between', color: '#e2e8f0' },
-  progressTrack: { height: 10, overflow: 'hidden', borderRadius: 999, background: '#334155' },
-  progressFill: { height: '100%', borderRadius: 999, background: '#22c55e', transition: 'width 200ms ease' },
-  error: { color: '#fca5a5' },
 }

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from importlib.metadata import version as _version
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import SettingsError
 
 from api.endpoints.ai_config import router as ai_config_router
@@ -50,6 +51,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = app_settings
+
+    # Allow Vite dev server (localhost:3000) to access the sidecar
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://127.0.0.1:3000",
+            "http://localhost:3000",
+            "tauri://localhost",
+            "https://tauri.localhost",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.include_router(ai_config_router)
     app.include_router(classifications_router)
     app.include_router(copilot_router)

@@ -40,21 +40,21 @@ export function SheetLibrary({ projectId, projectPath, sidecarPort }: SheetLibra
   )
 
   if (loading) {
-    return <div style={{ padding: 24, color: '#64748b' }}>Loading sheets...</div>
+    return <div className="p-6 text-text-secondary">Loading sheets...</div>
   }
 
   if (error) {
     return (
-      <div style={{ padding: 24, color: '#ef4444' }}>
+      <div className="p-6 text-error">
         <p>{error}</p>
-        <button type="button" onClick={loadSheets}>Retry</button>
+        <button type="button" onClick={loadSheets} className="btn btn-secondary mt-2">Retry</button>
       </div>
     )
   }
 
   if (sheets.length === 0) {
     return (
-      <div style={{ padding: 24, color: '#94a3b8', textAlign: 'center' }}>
+      <div className="p-6 text-text-tertiary text-center">
         No sheets found. Upload a PDF to get started.
       </div>
     )
@@ -63,31 +63,19 @@ export function SheetLibrary({ projectId, projectPath, sidecarPort }: SheetLibra
   return (
     <div>
       {/* Toolbar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '8px 0',
-          marginBottom: 12,
-        }}
-      >
-        <span style={{ fontSize: 14, color: '#64748b' }}>
+      <div className="flex justify-between items-center py-2 mb-3">
+        <span className="text-sm text-text-secondary">
           {sheets.length} sheet{sheets.length !== 1 ? 's' : ''}
         </span>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div className="flex gap-1">
           <button
             type="button"
             onClick={() => setViewMode('grid')}
-            style={{
-              padding: '4px 8px',
-              fontSize: 12,
-              fontWeight: viewMode === 'grid' ? 700 : 400,
-              background: viewMode === 'grid' ? '#e0f2fe' : 'transparent',
-              border: '1px solid #cbd5e1',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className={`px-2 py-1 text-xs rounded border border-border-strong transition-colors ${
+              viewMode === 'grid' 
+                ? 'bg-primary-light font-semibold text-primary' 
+                : 'bg-transparent font-normal text-text-secondary hover:bg-background'
+            }`}
             aria-label="Grid view"
           >
             Grid
@@ -95,15 +83,11 @@ export function SheetLibrary({ projectId, projectPath, sidecarPort }: SheetLibra
           <button
             type="button"
             onClick={() => setViewMode('list')}
-            style={{
-              padding: '4px 8px',
-              fontSize: 12,
-              fontWeight: viewMode === 'list' ? 700 : 400,
-              background: viewMode === 'list' ? '#e0f2fe' : 'transparent',
-              border: '1px solid #cbd5e1',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className={`px-2 py-1 text-xs rounded border border-border-strong transition-colors ${
+              viewMode === 'list' 
+                ? 'bg-primary-light font-semibold text-primary' 
+                : 'bg-transparent font-normal text-text-secondary hover:bg-background'
+            }`}
             aria-label="List view"
           >
             List
@@ -114,11 +98,8 @@ export function SheetLibrary({ projectId, projectPath, sidecarPort }: SheetLibra
       {/* Sheet display */}
       {viewMode === 'grid' ? (
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: 16,
-          }}
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
           data-testid="sheet-grid"
         >
           {sheets.map((sheet) => (
@@ -133,25 +114,25 @@ export function SheetLibrary({ projectId, projectPath, sidecarPort }: SheetLibra
           ))}
         </div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }} data-testid="sheet-list">
+        <table className="w-full border-collapse text-sm" data-testid="sheet-list">
           <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Sheet #</th>
-              <th style={{ padding: '8px 12px' }}>Title</th>
-              <th style={{ padding: '8px 12px' }}>Page</th>
-              <th style={{ padding: '8px 12px' }}>Discipline</th>
+            <tr className="border-b-2 border-border text-left">
+              <th className="px-3 py-2">Sheet #</th>
+              <th className="px-3 py-2">Title</th>
+              <th className="px-3 py-2">Page</th>
+              <th className="px-3 py-2">Discipline</th>
             </tr>
           </thead>
           <tbody>
             {sheets.map((sheet) => (
-              <tr key={sheet.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px', fontWeight: 600 }}>{sheet.sheet_number}</td>
-                <td style={{ padding: '8px 12px', color: '#475569' }}>
+              <tr key={sheet.id} className="border-b border-border">
+                <td className="px-3 py-2 font-semibold">{sheet.sheet_number}</td>
+                <td className="px-3 py-2 text-text-secondary">
                   {sheet.sheet_title ?? 'Untitled'}
                 </td>
-                <td style={{ padding: '8px 12px' }}>{sheet.page_index + 1}</td>
-                <td style={{ padding: '8px 12px', color: '#64748b' }}>
-                  {(sheet.sheet_metadata as Record<string, unknown>)?.discipline as string ?? '—'}
+                <td className="px-3 py-2 text-text-tertiary">{sheet.page_index + 1}</td>
+                <td className="px-3 py-2 text-text-tertiary">
+                  {(sheet.sheet_metadata?.discipline as string | undefined) ?? '—'}
                 </td>
               </tr>
             ))}

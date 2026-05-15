@@ -37,7 +37,7 @@
       "sidecars/sidecar"
     ],
     "resources": [
-      "resources/tesseract/**",
+      "resources/tesseract/",
       "resources/OllamaSetup.exe"
     ],
     "windows": {
