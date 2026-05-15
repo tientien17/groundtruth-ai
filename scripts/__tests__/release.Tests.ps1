@@ -38,6 +38,10 @@ $script:functionBlock = $script:functionBlock -replace '(?m)^\$ErrorActionPrefer
 $script:functionBlock = $script:functionBlock -replace '(?m)^\$repoRoot\s*=[^\r\n]*[\r\n]', ''
 $script:functionBlock = $script:functionBlock -replace '(?m)^\$(changelogPath|userFragmentsDir|devFragmentsDir|installerDir|releaseDate)\s*=[^\r\n]*[\r\n]', ''
 
+# Strip the dot-source guard line that wraps the main pipeline:
+#   if ($MyInvocation.InvocationName -ne '.') {
+$script:functionBlock = $script:functionBlock -replace '(?m)^if \(\$MyInvocation\.InvocationName -ne ''\.''\) \{[^\r\n]*[\r\n]', ''
+
 # Define a persistent temp root so tests share predictable scaffolding.
 $script:testRoot = Join-Path $env:TEMP "release_tests_$(Get-Random)"
 New-Item -ItemType Directory -Path $script:testRoot -Force | Out-Null
