@@ -9,27 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from models import (
-    AIAuditLog,
-    AIRun,
-    AISettings,
-    AuditLog,
-    Base,
-    Classification,
-    Document,
-    Export,
-    Formula,
-    Project,
-    ProjectMetadata,
-    Sheet,
-    SheetRender,
-    SheetText,
-    SheetTextBlock,
-    Snapshot,
-    TakeoffGeometry,
-    TakeoffItem,
-    TakeoffVertex,
-)
+import models  # noqa: F401  # Import all ORM classes so Base.metadata includes every table.
+from models import Base
 
 __all__ = [
     "init_db",

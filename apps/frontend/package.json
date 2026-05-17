@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@groundtruth/shared": "workspace:*",
+    "@tauri-apps/api": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3"

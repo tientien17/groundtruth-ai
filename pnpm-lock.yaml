@@ -13,6 +13,9 @@ importers:
       '@groundtruth/shared':
         specifier: workspace:*
         version: link:../shared
+      '@tauri-apps/api':
+        specifier: ^2.0.0
+        version: 2.11.0
       react:
         specifier: ^18.2.0
         version: 18.3.1

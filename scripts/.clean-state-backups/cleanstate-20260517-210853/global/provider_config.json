@@ -1,0 +1,6 @@
+{
+  "provider": "openai_compatible",
+  "base_url": "http://localhost:20128/v1",
+  "chat_model": "kr/claude-haiku-4.5",
+  "embedding_model": "text-embedding-3-small"
+}

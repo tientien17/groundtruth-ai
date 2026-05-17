@@ -103,6 +103,30 @@ def test_answer_question_returns_answer_and_sheet_page_citations(tmp_path: Path,
     assert "Answer ONLY from the provided project context" in captured["system"]
 
 
+def test_answer_question_uses_deterministic_exact_token_retrieval(tmp_path: Path, monkeypatch):
+    project_path = create_indexed_project(tmp_path)
+    captured: dict[str, str] = {}
+
+    async def fake_ai_generate(project_id, db_path, prompt, *, system=None, timeout=120.0):
+        captured["prompt"] = prompt
+        return AIResponse(text="Storm drain outfall uses a reinforced concrete headwall. [1]")
+
+    monkeypatch.setattr("services.rag.ai_generate", fake_ai_generate)
+
+    result = asyncio.run(
+        answer_question(
+            project_id=PROJECT_ID,
+            project_path=project_path,
+            question="reinforced concrete headwall",
+            limit=1,
+        )
+    )
+
+    assert result.citations[0].text == "reinforced concrete headwall detail at storm drain outfall"
+    assert result.citations[0].score > 0
+    assert "reinforced concrete headwall detail at storm drain outfall" in captured["prompt"]
+
+
 def test_answer_question_returns_unknown_without_context(tmp_path: Path, monkeypatch):
     project_path = tmp_path / "Empty.gtl"
     project_path.mkdir()

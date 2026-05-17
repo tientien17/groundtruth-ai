@@ -47,6 +47,7 @@ class OllamaStatus:
     running: bool
     models: set[str] = field(default_factory=set)
     error: str | None = None
+    error_category: str | None = None
 
 
 # ── Sensitive-info masking ───────────────────────────────────────────────────
@@ -171,6 +172,20 @@ async def _call_ollama(
     )
 
 
+def _categorize_ollama_error(exc: Exception) -> str:
+    """Map an Ollama connection exception to an error category string."""
+    msg = str(exc).lower()
+    if isinstance(exc, httpx.ConnectError):
+        return "ollama_not_running"
+    if isinstance(exc, httpx.TimeoutException):
+        return "network_error"
+    if "connection refused" in msg:
+        return "ollama_not_running"
+    if "503" in msg or "service unavailable" in msg:
+        return "ollama_not_running"
+    return "unknown"
+
+
 async def get_ollama_status(
     base_url: str,
     *,
@@ -182,7 +197,8 @@ async def get_ollama_status(
             resp = await client.get(f"{base_url}/api/tags")
             resp.raise_for_status()
     except Exception as exc:
-        return OllamaStatus(running=False, error=str(exc))
+        category = _categorize_ollama_error(exc)
+        return OllamaStatus(running=False, error=str(exc), error_category=category)
 
     body = resp.json()
     models = {

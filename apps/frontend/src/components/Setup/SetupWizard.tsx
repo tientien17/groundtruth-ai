@@ -4,12 +4,30 @@ const baseUrl = (port: number) => `http://127.0.0.1:${port}`
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+type ErrorCategory =
+  | 'ollama_not_running'
+  | 'ollama_install_failed'
+  | 'model_download_failed'
+  | 'provider_connection_failed'
+  | 'provider_validation_failed'
+  | 'provider_url_invalid'
+  | 'provider_not_reachable'
+  | 'sidecar_config_error'
+  | 'network_error'
+  | 'unknown'
+
+type SetupError = {
+  message: string
+  category: ErrorCategory
+}
+
 type ModelProgress = {
   status: string
   completed?: number
   total?: number | null
   percent?: number
   error?: string
+  error_category?: ErrorCategory
 }
 
 type SetupStatus = {
@@ -24,6 +42,7 @@ type SetupStatus = {
   ollama: {
     running: boolean
     error?: string | null
+    error_category?: ErrorCategory | null
   }
   models: Record<string, { installed: boolean; progress?: ModelProgress | null }>
 }
@@ -53,6 +72,90 @@ const INITIAL_CLOUD_FORM: CloudProviderForm = {
   embedding_model: 'text-embedding-3-small',
 }
 
+// ── Error display config ──────────────────────────────────────────────
+
+type ErrorDisplayConfig = {
+  icon: string
+  label: string
+  suggestion: string
+}
+
+const ERROR_DISPLAY: Record<ErrorCategory, ErrorDisplayConfig> = {
+  ollama_not_running: {
+    icon: '⚡',
+    label: 'Ollama unreachable',
+    suggestion: 'Make sure Ollama is installed and running on your machine.',
+  },
+  ollama_install_failed: {
+    icon: '⚡',
+    label: 'Ollama install failed',
+    suggestion: 'Try installing Ollama manually from ollama.com, then restart.',
+  },
+  model_download_failed: {
+    icon: '⬇',
+    label: 'Model download failed',
+    suggestion: 'Check your internet connection and try again.',
+  },
+  provider_connection_failed: {
+    icon: '🔗',
+    label: 'Provider unreachable',
+    suggestion: 'Verify the Base URL is correct and the provider is running.',
+  },
+  provider_validation_failed: {
+    icon: '⚠',
+    label: 'Invalid provider config',
+    suggestion: 'Check the provider fields and try again.',
+  },
+  provider_url_invalid: {
+    icon: '⚠',
+    label: 'Invalid URL',
+    suggestion: 'Base URL must start with http:// or https://.',
+  },
+  provider_not_reachable: {
+    icon: '🔗',
+    label: 'Provider not reachable',
+    suggestion: 'Verify the endpoint is accepting connections.',
+  },
+  sidecar_config_error: {
+    icon: '⚙',
+    label: 'Configuration error',
+    suggestion: 'A required environment variable is missing.',
+  },
+  network_error: {
+    icon: '🌐',
+    label: 'Network error',
+    suggestion: 'Check your internet connection and try again.',
+  },
+  unknown: {
+    icon: '✕',
+    label: 'Setup error',
+    suggestion: 'An unexpected error occurred. Try restarting the application.',
+  },
+}
+
+function ErrorBanner({ error: err }: { error: SetupError }) {
+  const cfg = ERROR_DISPLAY[err.category] ?? ERROR_DISPLAY.unknown
+  return (
+    <div className="mt-4 p-3 rounded bg-error-light text-error" role="alert">
+      <strong className="text-xs uppercase tracking-wider">{cfg.label}</strong>
+      <p className="mt-1 text-sm">{err.message}</p>
+      <p className="mt-1 text-xs opacity-70">{cfg.suggestion}</p>
+    </div>
+  )
+}
+
+function setupErrorFromResponse(
+  body: Record<string, unknown> | null,
+  fallback: string,
+  fallbackCategory: ErrorCategory = 'unknown',
+): SetupError {
+  const category = (body?.error_category as ErrorCategory) ?? fallbackCategory
+  return {
+    message: (body?.error as string) ?? fallback,
+    category,
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────────────
 
 export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
@@ -62,7 +165,7 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
   const [isPulling, setIsPulling] = useState(false)
   const [isInstallingOllama, setIsInstallingOllama] = useState(false)
   const [isSavingCloud, setIsSavingCloud] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<SetupError | null>(null)
   const [cloudForm, setCloudForm] = useState<CloudProviderForm>(INITIAL_CLOUD_FORM)
 
   // Poll setup status when in local mode
@@ -83,7 +186,8 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
         setIsPulling(hasActivePull)
         if (failedProgress) {
           const [model, info] = failedProgress
-          setError(info.progress?.error ?? `${model} download failed`)
+          const cat = info?.progress?.error_category ?? 'model_download_failed'
+          setError({ message: info.progress?.error ?? `${model} download failed`, category: cat })
         } else {
           setError(null)
         }
@@ -92,7 +196,12 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
           onReady()
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Setup check failed')
+        if (!cancelled) {
+          setError({
+            message: err instanceof Error ? err.message : 'Setup check failed',
+            category: 'network_error',
+          })
+        }
       }
     }
 
@@ -129,14 +238,22 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
     setError(null)
     try {
       const response = await fetch(`${SIDECAR_URL}/setup/ollama/install`, { method: 'POST' })
-      const body = await response.json().catch(() => ({}))
-      if (!response.ok || body.error) {
-        throw new Error(body.error ?? `Ollama install failed: ${response.status}`)
+      const body: Record<string, unknown> | null = await response.json().catch(() => null)
+      if (!response.ok || (body && body.error)) {
+        if (body) {
+          setError(setupErrorFromResponse(body, body.error as string ?? `Ollama install failed: ${response.status}`, 'ollama_install_failed'))
+        } else {
+          setError({ message: `Ollama install failed: ${response.status}`, category: 'ollama_install_failed' })
+        }
+        return
       }
       await waitForOllama(sidecarPort)
       setStatus(await fetchSetupStatus(sidecarPort))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ollama install failed')
+      setError({
+        message: err instanceof Error ? err.message : 'Ollama install failed',
+        category: 'ollama_install_failed',
+      })
     } finally {
       setIsInstallingOllama(false)
     }
@@ -152,20 +269,28 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ models }),
       })
-      const body = await response.json().catch(() => ({}))
-      if (!response.ok || body.error) {
-        throw new Error(body.error ?? `Model download failed: ${response.status}`)
+      const body: Record<string, unknown> | null = await response.json().catch(() => null)
+      if (!response.ok || (body && body.error)) {
+        if (body) {
+          setError(setupErrorFromResponse(body, body.error as string ?? `Model download failed: ${response.status}`, 'model_download_failed'))
+        } else {
+          setError({ message: `Model download failed: ${response.status}`, category: 'model_download_failed' })
+        }
+        return
       }
       setStatus(await fetchSetupStatus(sidecarPort))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Model download failed')
+      setError({
+        message: err instanceof Error ? err.message : 'Model download failed',
+        category: 'model_download_failed',
+      })
       setIsPulling(false)
     }
   }, [status, sidecarPort])
 
   const saveCloudProvider = useCallback(async () => {
     if (!cloudForm.base_url.trim()) {
-      setError('Base URL is required')
+      setError({ message: 'Base URL is required', category: 'provider_validation_failed' })
       return
     }
     setIsSavingCloud(true)
@@ -185,13 +310,21 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      const body = await response.json().catch(() => ({}))
-      if (!response.ok || body.error) {
-        throw new Error(body.error ?? `Cloud provider setup failed: ${response.status}`)
+      const body: Record<string, unknown> | null = await response.json().catch(() => null)
+      if (!response.ok || (body && body.error)) {
+        if (body) {
+          setError(setupErrorFromResponse(body, body.error as string ?? `Cloud provider setup failed: ${response.status}`, 'provider_validation_failed'))
+        } else {
+          setError({ message: `Cloud provider setup failed: ${response.status}`, category: 'provider_connection_failed' })
+        }
+        return
       }
       onReady()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Cloud provider setup failed')
+      setError({
+        message: err instanceof Error ? err.message : 'Cloud provider setup failed',
+        category: 'provider_connection_failed',
+      })
     } finally {
       setIsSavingCloud(false)
     }
@@ -211,7 +344,7 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
             instance.
           </p>
 
-          {error ? <p className="text-error mt-4 p-3 rounded bg-error-light">{error}</p> : null}
+          {error ? <ErrorBanner error={error} /> : null}
 
           <div className="grid gap-4 mt-6">
             <button 
@@ -254,7 +387,7 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
             that speaks the OpenAI chat completions format.
           </p>
 
-          {error ? <p className="text-error mt-4 p-3 rounded bg-error-light">{error}</p> : null}
+          {error ? <ErrorBanner error={error} /> : null}
 
           <div className="grid gap-4 mt-6">
             <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
@@ -350,9 +483,9 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
           <strong>nomic-embed-text</strong> before AI features run.
         </p>
 
-        {error ? <p className="text-error mt-4 p-3 rounded bg-error-light">{error}</p> : null}
+        {error ? <ErrorBanner error={error} /> : null}
         {status && !status.ollama.running ? (
-          <p className="text-error mt-4 p-3 rounded bg-error-light">Ollama is not reachable. Install Ollama, then setup continues.</p>
+          <ErrorBanner error={{ message: 'Ollama is not reachable. Install Ollama, then setup continues.', category: 'ollama_not_running' }} />
         ) : null}
 
         {status && !status.ollama.running ? (
