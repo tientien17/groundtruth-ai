@@ -4,12 +4,12 @@
 
 import type { ToolsSidebarProps, ToolType } from './types'
 
-const TOOLS: { id: ToolType; label: string; icon: string }[] = [
-  { id: 'select', label: 'Select', icon: '↖' },
-  { id: 'pan', label: 'Pan', icon: '✋' },
-  { id: 'measure-length', label: 'Length', icon: '📏' },
-  { id: 'measure-area', label: 'Area', icon: '⬛' },
-  { id: 'count', label: 'Count', icon: '#' },
+const TOOLS: { id: ToolType; label: string; icon: string; description: string }[] = [
+  { id: 'select', label: 'Select', icon: '↖', description: 'Click to select and inspect items on the drawing' },
+  { id: 'pan', label: 'Pan', icon: '✋', description: 'Drag to pan and move around the drawing' },
+  { id: 'measure-length', label: 'Length', icon: '📏', description: 'Click points to measure linear distances — double-click to finish (walls, pipes, beams)' },
+  { id: 'measure-area', label: 'Area', icon: '⬛', description: 'Click to draw a polygon and measure area — double-click to finish (rooms, paving, zones)' },
+  { id: 'count', label: 'Count', icon: '#', description: 'Click to place a count marker (doors, windows, fixtures, rebars)' },
 ]
 
 export function ToolsSidebar({ activeTool, onSelectTool }: ToolsSidebarProps) {
@@ -33,7 +33,7 @@ export function ToolsSidebar({ activeTool, onSelectTool }: ToolsSidebarProps) {
                   ? 'bg-blue-100 text-blue-700'
                   : 'hover:bg-slate-100 text-slate-600'
               }`}
-              title={tool.label}
+              title={tool.description}
               data-testid={`tool-${tool.id}`}
             >
               <span className="text-lg w-6 text-center">{tool.icon}</span>
