@@ -15,6 +15,7 @@ import { ToolsSidebar } from './ToolsSidebar'
 import { DragDropZone } from './DragDropZone'
 import { CandidateReview } from '../Search/CandidateReview'
 import type { TextSearchCandidate } from '../Search/TextSearchTool'
+import { WorkflowStepper } from './WorkflowStepper'
 
 export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId }: WorkspaceProps) {
   const [sheets, setSheets] = useState<SheetSummary[]>([])
@@ -221,12 +222,17 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
   const selectedSheet = sheets.find((s) => s.id === selectedSheetId) ?? null
 
   return (
-    <div
-      className="flex h-screen bg-white"
-      data-testid="workspace"
-    >
-      {/* Left: Sheets sidebar */}
-      <div className="w-56 flex-shrink-0">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <WorkflowStepper 
+        sheetsLength={sheets.length}
+        takeoffItemsLength={takeoffItems.length}
+      />
+      <div
+        className="flex flex-1 min-h-0 bg-white"
+        data-testid="workspace"
+      >
+        {/* Left: Sheets sidebar */}
+        <div className="w-56 flex-shrink-0">
         <SheetsSidebar
           sheets={sheets}
           selectedSheetId={selectedSheetId}
@@ -311,5 +317,6 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
         </div>
       </div>
     </div>
+  </div>
   )
 }
