@@ -65,8 +65,8 @@ describe('SetupWizard — port & error behavior', () => {
       expect(container.textContent).toContain('Choose your AI provider')
     })
 
-    // Click "Local AI" to enter local mode — only now errors surface
-    await clickButton(container, 'Local AI')
+    // Click "Offline" to enter offline mode — only now errors surface
+    await clickButton(container, 'Offline')
 
     // Error text from the failed fetch should appear
     await vi.waitFor(() => {
@@ -95,8 +95,8 @@ describe('SetupWizard — port & error behavior', () => {
       <SetupWizard onReady={onReady} sidecarPort={8765} />,
     )
 
-    // Click "Local AI" to enter local mode
-    await clickButton(container, 'Local AI')
+    // Click "Offline" to enter offline mode
+    await clickButton(container, 'Offline')
 
     // The polling effect should detect ready state and fire onReady
     await vi.waitFor(() => {
@@ -180,8 +180,9 @@ describe('SetupWizard — error category display', () => {
       <SetupWizard onReady={onReady} sidecarPort={9999} />,
     )
 
-    // Enter local mode
-    await clickButton(container, 'Local AI')
+    // Enter offline mode and select Ollama
+    await clickButton(container, 'Offline')
+    await clickButton(container, 'Ollama')
     await clickButton(container, 'Download models')
 
     // Wait for the error banner to appear with the category label
@@ -219,7 +220,8 @@ describe('SetupWizard — error category display', () => {
       <SetupWizard onReady={onReady} sidecarPort={9999} />,
     )
 
-    await clickButton(container, 'Local AI')
+    await clickButton(container, 'Offline')
+    await clickButton(container, 'Ollama')
 
     await vi.waitFor(() => {
       const text = container.textContent ?? ''
@@ -257,8 +259,9 @@ describe('SetupWizard — error category display', () => {
       <SetupWizard onReady={onReady} sidecarPort={9999} />,
     )
 
-    // Click cloud provider mode
-    await clickButton(container, 'Connect existing provider')
+    // Click cloud provider mode and select 9router
+    await clickButton(container, 'Cloud')
+    await clickButton(container, '9router')
 
     // Fill in the form
     const baseUrlInput = container.querySelector('input[type="text"]') as HTMLInputElement

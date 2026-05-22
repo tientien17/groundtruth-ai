@@ -76,7 +76,7 @@ class PullModelsRequest(BaseModel):
 class ProviderConfigRequest(BaseModel):
     """Cloud AI provider configuration submitted during setup."""
 
-    provider: str = Field(default="openai_compatible", pattern=r"^(openai_compatible|vllm)$")
+    provider: str = Field(default="openai_compatible", pattern=r"^[a-zA-Z0-9_-]+$")
     base_url: str = Field(..., min_length=1, max_length=2048)
     api_key: str | None = Field(default=None, max_length=2048)
     chat_model: str = Field(default="gpt-4o", max_length=255)

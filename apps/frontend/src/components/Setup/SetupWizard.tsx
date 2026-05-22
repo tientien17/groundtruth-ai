@@ -47,7 +47,36 @@ type SetupStatus = {
   models: Record<string, { installed: boolean; progress?: ModelProgress | null }>
 }
 
-type SetupMode = 'local' | 'cloud'
+type SetupMode = 'offline' | 'cloud'
+
+type OfflineProvider = 
+  | 'ollama'
+  | 'lmstudio'
+  | 'vllm'
+  | 'jan'
+  | 'gpt4all'
+  | 'localai'
+  | 'kobold'
+  | 'textgen-webui'
+  | 'oobabooga'
+  | 'llamacpp'
+
+type CloudProvider =
+  | 'openai'
+  | 'anthropic'
+  | 'google'
+  | '9router'
+  | 'azure'
+
+type ProviderConfig = {
+  id: string
+  name: string
+  description: string
+  defaultBaseUrl: string
+  defaultChatModel: string
+  defaultEmbeddingModel: string
+  requiresApiKey: boolean
+}
 
 type SetupWizardProps = {
   onReady: () => void
@@ -60,6 +89,147 @@ type CloudProviderForm = {
   api_key: string
   chat_model: string
   embedding_model: string
+}
+
+const OFFLINE_PROVIDERS: Record<OfflineProvider, ProviderConfig> = {
+  ollama: {
+    id: 'ollama',
+    name: 'Ollama',
+    description: 'Run models locally with Ollama',
+    defaultBaseUrl: 'http://localhost:11434/v1',
+    defaultChatModel: 'llama3.2',
+    defaultEmbeddingModel: 'nomic-embed-text',
+    requiresApiKey: false,
+  },
+  lmstudio: {
+    id: 'lmstudio',
+    name: 'LM Studio',
+    description: 'Local inference with LM Studio',
+    defaultBaseUrl: 'http://localhost:1234/v1',
+    defaultChatModel: 'local-model',
+    defaultEmbeddingModel: 'nomic-embed-text',
+    requiresApiKey: false,
+  },
+  vllm: {
+    id: 'vllm',
+    name: 'vLLM',
+    description: 'High-performance local inference',
+    defaultBaseUrl: 'http://localhost:8000/v1',
+    defaultChatModel: 'meta-llama/Llama-3.2-3B-Instruct',
+    defaultEmbeddingModel: 'BAAI/bge-small-en-v1.5',
+    requiresApiKey: false,
+  },
+  jan: {
+    id: 'jan',
+    name: 'Jan',
+    description: 'Open-source ChatGPT alternative',
+    defaultBaseUrl: 'http://localhost:1337/v1',
+    defaultChatModel: 'llama3.2',
+    defaultEmbeddingModel: 'nomic-embed-text',
+    requiresApiKey: false,
+  },
+  gpt4all: {
+    id: 'gpt4all',
+    name: 'GPT4All',
+    description: 'Privacy-focused local AI',
+    defaultBaseUrl: 'http://localhost:4891/v1',
+    defaultChatModel: 'mistral-7b-instruct',
+    defaultEmbeddingModel: 'all-MiniLM-L6-v2',
+    requiresApiKey: false,
+  },
+  localai: {
+    id: 'localai',
+    name: 'LocalAI',
+    description: 'OpenAI-compatible local server',
+    defaultBaseUrl: 'http://localhost:8080/v1',
+    defaultChatModel: 'gpt-3.5-turbo',
+    defaultEmbeddingModel: 'text-embedding-ada-002',
+    requiresApiKey: false,
+  },
+  kobold: {
+    id: 'kobold',
+    name: 'KoboldAI',
+    description: 'Browser-based AI for writing',
+    defaultBaseUrl: 'http://localhost:5001/v1',
+    defaultChatModel: 'koboldcpp',
+    defaultEmbeddingModel: 'all-MiniLM-L6-v2',
+    requiresApiKey: false,
+  },
+  'textgen-webui': {
+    id: 'textgen-webui',
+    name: 'Text Generation WebUI',
+    description: 'Gradio web UI for LLMs',
+    defaultBaseUrl: 'http://localhost:5000/v1',
+    defaultChatModel: 'text-generation-webui',
+    defaultEmbeddingModel: 'sentence-transformers',
+    requiresApiKey: false,
+  },
+  oobabooga: {
+    id: 'oobabooga',
+    name: 'Oobabooga',
+    description: 'Text generation web UI',
+    defaultBaseUrl: 'http://localhost:5000/v1',
+    defaultChatModel: 'oobabooga',
+    defaultEmbeddingModel: 'all-MiniLM-L6-v2',
+    requiresApiKey: false,
+  },
+  llamacpp: {
+    id: 'llamacpp',
+    name: 'llama.cpp Server',
+    description: 'Efficient C++ inference server',
+    defaultBaseUrl: 'http://localhost:8080/v1',
+    defaultChatModel: 'llama-model',
+    defaultEmbeddingModel: 'embedding-model',
+    requiresApiKey: false,
+  },
+}
+
+const CLOUD_PROVIDERS: Record<CloudProvider, ProviderConfig> = {
+  openai: {
+    id: 'openai',
+    name: 'OpenAI',
+    description: 'GPT-4, GPT-4o, and more',
+    defaultBaseUrl: 'https://api.openai.com/v1',
+    defaultChatModel: 'gpt-4o',
+    defaultEmbeddingModel: 'text-embedding-3-small',
+    requiresApiKey: true,
+  },
+  anthropic: {
+    id: 'anthropic',
+    name: 'Anthropic',
+    description: 'Claude 3.5 Sonnet and more',
+    defaultBaseUrl: 'https://api.anthropic.com/v1',
+    defaultChatModel: 'claude-3-5-sonnet-20241022',
+    defaultEmbeddingModel: 'voyage-3',
+    requiresApiKey: true,
+  },
+  google: {
+    id: 'google',
+    name: 'Google AI',
+    description: 'Gemini 2.0 and more',
+    defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1',
+    defaultChatModel: 'gemini-2.0-flash-exp',
+    defaultEmbeddingModel: 'text-embedding-004',
+    requiresApiKey: true,
+  },
+  '9router': {
+    id: '9router',
+    name: '9router',
+    description: 'Multi-provider AI routing',
+    defaultBaseUrl: 'https://api.9router.com/v1',
+    defaultChatModel: 'gpt-4o',
+    defaultEmbeddingModel: 'text-embedding-3-small',
+    requiresApiKey: false,
+  },
+  azure: {
+    id: 'azure',
+    name: 'Azure OpenAI',
+    description: 'Enterprise OpenAI via Azure',
+    defaultBaseUrl: 'https://YOUR-RESOURCE.openai.azure.com',
+    defaultChatModel: 'gpt-4o',
+    defaultEmbeddingModel: 'text-embedding-3-small',
+    requiresApiKey: true,
+  },
 }
 
 const REQUIRED_MODELS = ['llama3.2', 'nomic-embed-text'] as const
@@ -162,15 +332,17 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
   const SIDECAR_URL = baseUrl(sidecarPort)
   const [status, setStatus] = useState<SetupStatus | null>(null)
   const [mode, setMode] = useState<SetupMode | null>(null)
+  const [selectedOfflineProvider, setSelectedOfflineProvider] = useState<OfflineProvider | null>(null)
+  const [selectedCloudProvider, setSelectedCloudProvider] = useState<CloudProvider | null>(null)
   const [isPulling, setIsPulling] = useState(false)
   const [isInstallingOllama, setIsInstallingOllama] = useState(false)
   const [isSavingCloud, setIsSavingCloud] = useState(false)
   const [error, setError] = useState<SetupError | null>(null)
   const [cloudForm, setCloudForm] = useState<CloudProviderForm>(INITIAL_CLOUD_FORM)
 
-  // Poll setup status when in local mode
+  // Poll setup status when in offline mode
   useEffect(() => {
-    if (mode !== 'local') return
+    if (mode !== 'offline') return
     let cancelled = false
 
     async function refresh() {
@@ -339,9 +511,8 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
           <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">First-run setup</p>
           <h1 className="mt-2 mb-0 text-3xl font-semibold">Choose your AI provider</h1>
           <p className="text-slate-300 leading-relaxed mt-3">
-            GroundTruth Local works with local models (Ollama) or any OpenAI-compatible
-            endpoint — including LM Studio, vLLM, cloud providers, or a remote Ollama
-            instance.
+            GroundTruth Local works with offline endpoints (Ollama, LM Studio, vLLM, etc.) 
+            or cloud providers (OpenAI, Anthropic, 9router, etc.).
           </p>
 
           {error ? <ErrorBanner error={error} /> : null}
@@ -349,12 +520,12 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
           <div className="grid gap-4 mt-6">
             <button 
               type="button" 
-              onClick={() => setMode('local')} 
+              onClick={() => setMode('offline')} 
               className="block w-full p-5 rounded-2xl border-2 border-slate-600 bg-slate-700 hover:bg-slate-600 hover:border-slate-500 cursor-pointer text-left transition-colors"
             >
-              <strong className="block text-lg font-semibold text-slate-50">Local AI</strong>
+              <strong className="block text-lg font-semibold text-slate-50">Offline</strong>
               <span className="block text-sm text-slate-400 mt-1">
-                Install Ollama and download models to run entirely on your machine
+                Run models locally with Ollama, LM Studio, vLLM, or other local servers
               </span>
             </button>
             <button 
@@ -362,9 +533,9 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
               onClick={() => setMode('cloud')} 
               className="block w-full p-5 rounded-2xl border-2 border-slate-600 bg-slate-700 hover:bg-slate-600 hover:border-slate-500 cursor-pointer text-left transition-colors"
             >
-              <strong className="block text-lg font-semibold text-slate-50">Connect existing provider</strong>
+              <strong className="block text-lg font-semibold text-slate-50">Cloud</strong>
               <span className="block text-sm text-slate-400 mt-1">
-                Use any OpenAI-compatible API — LM Studio, vLLM, OpenAI, or remote Ollama
+                Connect to OpenAI, Anthropic, Google AI, 9router, or Azure OpenAI
               </span>
             </button>
           </div>
@@ -373,18 +544,120 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
     )
   }
 
+  // ── Offline provider selection ───────────────────────────────────────
+
+  if (mode === 'offline' && selectedOfflineProvider === null) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
+        <section className="w-full max-w-[720px] mx-4 p-8 rounded-3xl bg-slate-800">
+          <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Offline setup</p>
+          <h1 className="mt-2 mb-0 text-3xl font-semibold">Choose your offline provider</h1>
+          <p className="text-slate-300 leading-relaxed mt-3">
+            Select the local AI server you want to use. All options run entirely on your machine.
+          </p>
+
+          {error ? <ErrorBanner error={error} /> : null}
+
+          <div className="grid grid-cols-2 gap-3 mt-6">
+            {(Object.entries(OFFLINE_PROVIDERS) as [OfflineProvider, ProviderConfig][]).map(([id, config]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setSelectedOfflineProvider(id)
+                  setCloudForm({
+                    provider: config.id,
+                    base_url: config.defaultBaseUrl,
+                    api_key: '',
+                    chat_model: config.defaultChatModel,
+                    embedding_model: config.defaultEmbeddingModel,
+                  })
+                }}
+                className="p-4 rounded-xl border-2 border-slate-600 bg-slate-700 hover:bg-slate-600 hover:border-slate-500 cursor-pointer text-left transition-colors"
+              >
+                <strong className="block text-base font-semibold text-slate-50">{config.name}</strong>
+                <span className="block text-xs text-slate-400 mt-1">{config.description}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { setMode(null); setError(null) }}
+            className="block w-full mt-6 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
+          >
+            ← Back to mode selection
+          </button>
+        </section>
+      </main>
+    )
+  }
+
+  // ── Cloud provider selection ─────────────────────────────────────────
+
+  if (mode === 'cloud' && selectedCloudProvider === null) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
+        <section className="w-full max-w-[720px] mx-4 p-8 rounded-3xl bg-slate-800">
+          <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Cloud setup</p>
+          <h1 className="mt-2 mb-0 text-3xl font-semibold">Choose your cloud provider</h1>
+          <p className="text-slate-300 leading-relaxed mt-3">
+            Select the cloud AI service you want to use. Requires an API key.
+          </p>
+
+          {error ? <ErrorBanner error={error} /> : null}
+
+          <div className="grid grid-cols-2 gap-3 mt-6">
+            {(Object.entries(CLOUD_PROVIDERS) as [CloudProvider, ProviderConfig][]).map(([id, config]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setSelectedCloudProvider(id)
+                  setCloudForm({
+                    provider: config.id,
+                    base_url: config.defaultBaseUrl,
+                    api_key: '',
+                    chat_model: config.defaultChatModel,
+                    embedding_model: config.defaultEmbeddingModel,
+                  })
+                }}
+                className="p-4 rounded-xl border-2 border-slate-600 bg-slate-700 hover:bg-slate-600 hover:border-slate-500 cursor-pointer text-left transition-colors"
+              >
+                <strong className="block text-base font-semibold text-slate-50">{config.name}</strong>
+                <span className="block text-xs text-slate-400 mt-1">{config.description}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { setMode(null); setError(null) }}
+            className="block w-full mt-6 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
+          >
+            ← Back to mode selection
+          </button>
+        </section>
+      </main>
+    )
+  }
+
   // ── Cloud provider form ──────────────────────────────────────────────
 
   if (mode === 'cloud') {
+    const providerConfig = selectedCloudProvider ? CLOUD_PROVIDERS[selectedCloudProvider] : null
     return (
       <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
         <section className="w-full max-w-[560px] mx-4 p-8 rounded-3xl bg-slate-800">
           <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Connect provider</p>
-          <h1 className="mt-2 mb-0 text-[28px] font-semibold">OpenAI-compatible endpoint</h1>
+          <h1 className="mt-2 mb-0 text-[28px] font-semibold">
+            {providerConfig ? `Configure ${providerConfig.name}` : 'OpenAI-compatible endpoint'}
+          </h1>
           <p className="text-slate-300 leading-relaxed mt-3">
-            Enter your provider details. Works with{' '}
-            <strong>LM Studio, Ollama (remote), vLLM, OpenAI,</strong> or any API
-            that speaks the OpenAI chat completions format.
+            {providerConfig 
+              ? `Enter your ${providerConfig.name} API details to continue.`
+              : 'Enter your provider details. Works with LM Studio, Ollama (remote), vLLM, OpenAI, or any API that speaks the OpenAI chat completions format.'
+            }
           </p>
 
           {error ? <ErrorBanner error={error} /> : null}
@@ -413,16 +686,18 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
               />
             </label>
 
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
-              API Key (optional)
-              <input
-                type="password"
-                value={cloudForm.api_key}
-                onChange={(e) => setCloudForm({ ...cloudForm, api_key: e.target.value })}
-                placeholder="sk-..."
-                className="input"
-              />
-            </label>
+            {(!providerConfig || providerConfig.requiresApiKey) ? (
+              <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                API Key
+                <input
+                  type="password"
+                  value={cloudForm.api_key}
+                  onChange={(e) => setCloudForm({ ...cloudForm, api_key: e.target.value })}
+                  placeholder="sk-..."
+                  className="input"
+                />
+              </label>
+            ) : null}
 
             <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
               Chat model
@@ -458,17 +733,89 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
 
           <button
             type="button"
-            onClick={() => { setMode('local'); setError(null); setIsSavingCloud(false) }}
+            onClick={() => { setSelectedCloudProvider(null); setError(null); setIsSavingCloud(false) }}
             className="block w-full mt-3 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
           >
-            ← Use local AI instead
+            ← Back to provider selection
           </button>
         </section>
       </main>
     )
   }
 
-  // ── Local Ollama flow ────────────────────────────────────────────────
+  // ── Offline provider configuration ───────────────────────────────────
+
+  // For non-Ollama offline providers, show generic configuration form
+  if (mode === 'offline' && selectedOfflineProvider && selectedOfflineProvider !== 'ollama') {
+    const providerConfig = OFFLINE_PROVIDERS[selectedOfflineProvider]
+    return (
+      <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
+        <section className="w-full max-w-[560px] mx-4 p-8 rounded-3xl bg-slate-800">
+          <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Offline setup</p>
+          <h1 className="mt-2 mb-0 text-[28px] font-semibold">Configure {providerConfig.name}</h1>
+          <p className="text-slate-300 leading-relaxed mt-3">
+            Enter your {providerConfig.name} endpoint details. Make sure {providerConfig.name} is running on your machine.
+          </p>
+
+          {error ? <ErrorBanner error={error} /> : null}
+
+          <div className="grid gap-4 mt-6">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Base URL
+              <input
+                type="text"
+                value={cloudForm.base_url}
+                onChange={(e) => setCloudForm({ ...cloudForm, base_url: e.target.value })}
+                placeholder={providerConfig.defaultBaseUrl}
+                className="input"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Chat model
+              <input
+                type="text"
+                value={cloudForm.chat_model}
+                onChange={(e) => setCloudForm({ ...cloudForm, chat_model: e.target.value })}
+                placeholder={providerConfig.defaultChatModel}
+                className="input"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Embedding model
+              <input
+                type="text"
+                value={cloudForm.embedding_model}
+                onChange={(e) => setCloudForm({ ...cloudForm, embedding_model: e.target.value })}
+                placeholder={providerConfig.defaultEmbeddingModel}
+                className="input"
+              />
+            </label>
+          </div>
+
+          <button
+            type="button"
+            onClick={saveCloudProvider}
+            disabled={isSavingCloud || !cloudForm.base_url || !cloudForm.chat_model || !cloudForm.embedding_model}
+            className="btn btn-primary w-full mt-6 py-3.5 text-base"
+          >
+            {isSavingCloud ? 'Saving…' : 'Connect & continue'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setSelectedOfflineProvider(null); setError(null); setIsSavingCloud(false) }}
+            className="block w-full mt-3 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
+          >
+            ← Back to provider selection
+          </button>
+        </section>
+      </main>
+    )
+  }
+
+  // ── Ollama-specific flow ─────────────────────────────────────────────
 
   const models = status ? requiredModelEntries(status) : REQUIRED_MODELS.map((model) => [model, null] as const)
   const setupReady = requiredModelsReady(status)
@@ -476,7 +823,7 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
   return (
     <main className="min-h-screen grid place-items-center bg-slate-900 text-slate-50">
       <section className="w-full max-w-[560px] mx-4 p-8 rounded-3xl bg-slate-800">
-        <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Local AI setup</p>
+        <p className="m-0 text-sky-400 uppercase tracking-widest text-xs font-semibold">Ollama setup</p>
         <h1 className="mt-2 mb-0 text-3xl font-semibold">Prepare local models</h1>
         <p className="text-slate-300 leading-relaxed mt-3">
           GroundTruth Local needs Ollama plus <strong>llama3.2</strong> and{' '}
@@ -548,10 +895,10 @@ export function SetupWizard({ onReady, sidecarPort = 8765 }: SetupWizardProps) {
 
         <button
           type="button"
-          onClick={() => { setMode('cloud'); setError(null); setIsPulling(false) }}
+          onClick={() => { setSelectedOfflineProvider(null); setError(null); setIsPulling(false) }}
           className="block w-full mt-3 p-2.5 rounded-xl border-0 bg-transparent text-slate-400 cursor-pointer text-sm underline hover:text-slate-300"
         >
-          Use cloud provider instead →
+          ← Back to provider selection
         </button>
       </section>
     </main>
