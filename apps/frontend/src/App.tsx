@@ -19,17 +19,37 @@ function App() {
 
   useEffect(() => {
     let cancelled = false
+
+    async function checkSetup(port: number) {
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/setup/status`)
+        const data = await res.json()
+        if (!cancelled && !data.required) {
+          setSetupReady(true)
+        }
+      } catch {
+        // Cannot check setup — show wizard
+      }
+    }
+
     async function discoverPort() {
       try {
         // Try Tauri IPC first — works when running inside the desktop app
         const { invoke } = await import('@tauri-apps/api/core')
         const port = await invoke<number>('sidecar_port')
-        if (!cancelled) setSidecarPort(port)
+        if (!cancelled) {
+          setSidecarPort(port)
+          checkSetup(port)
+        }
       } catch {
         // Fallback for Vite dev server (not running in Tauri WebView)
-        if (!cancelled) setSidecarPort(FALLBACK_PORT)
+        if (!cancelled) {
+          setSidecarPort(FALLBACK_PORT)
+          checkSetup(FALLBACK_PORT)
+        }
       }
     }
+
     discoverPort()
     return () => { cancelled = true }
   }, [])
