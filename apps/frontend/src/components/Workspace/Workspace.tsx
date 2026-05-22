@@ -16,6 +16,7 @@ import { DragDropZone } from './DragDropZone'
 import { CandidateReview } from '../Search/CandidateReview'
 import type { TextSearchCandidate } from '../Search/TextSearchTool'
 import { WorkflowStepper } from './WorkflowStepper'
+import { AiAutoDetectButton } from './AiAutoDetectButton'
 
 export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId }: WorkspaceProps) {
   const [sheets, setSheets] = useState<SheetSummary[]>([])
@@ -27,6 +28,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
   const [searchCandidates, setSearchCandidates] = useState<TextSearchCandidate[]>([])
   const [reviewLoading, setReviewLoading] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isAutoDetecting, setIsAutoDetecting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const buildTakeoffItemsUrl = useCallback((sheetId: string) => {
@@ -219,6 +221,36 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
     fileInputRef.current?.click()
   }
 
+  const handleAutoDetect = async () => {
+    if (!selectedSheetId) return
+    setIsAutoDetecting(true)
+    try {
+      const params = new URLSearchParams({ project_path: projectPath })
+      const res = await fetch(`http://127.0.0.1:${sidecarPort}/projects/${projectId}/sheets/${selectedSheetId}/auto-detect?${params}`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        throw new Error(`Auto-detect failed: ${res.statusText}`)
+      }
+      const data = await res.json()
+      
+      // Transform auto-detect items into TextSearchCandidate format for the CandidateReview
+      const candidates: TextSearchCandidate[] = data.map((item: { label: string, confidence: number, bbox: [number, number, number, number] }) => ({
+        document_id: 'auto-detect',
+        sheet_id: selectedSheetId,
+        page_index: 0,
+        text: `AI Detected: ${item.label} (${(item.confidence * 100).toFixed(0)}%)`,
+        bbox: item.bbox,
+      }))
+      
+      setSearchCandidates(prev => [...prev, ...candidates])
+    } catch (err) {
+      console.error('Auto-detect error:', err)
+    } finally {
+      setIsAutoDetecting(false)
+    }
+  }
+
   const selectedSheet = sheets.find((s) => s.id === selectedSheetId) ?? null
 
   return (
@@ -255,7 +287,12 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
       </div>
 
       {/* Left: Tools sidebar */}
-      <div className="w-40 flex-shrink-0">
+      <div className="w-40 flex-shrink-0 flex flex-col bg-slate-50 border-r border-slate-200">
+        <AiAutoDetectButton 
+          onDetect={handleAutoDetect} 
+          isDetecting={isAutoDetecting} 
+          disabled={!selectedSheetId || isAutoDetecting} 
+        />
         <ToolsSidebar
           activeTool={activeTool}
           onSelectTool={setActiveTool}

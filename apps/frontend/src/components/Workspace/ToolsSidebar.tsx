@@ -15,7 +15,7 @@ const TOOLS: { id: ToolType; label: string; icon: string; description: string }[
 export function ToolsSidebar({ activeTool, onSelectTool }: ToolsSidebarProps) {
   return (
     <div
-      className="flex flex-col h-full bg-slate-50 border-r border-slate-200"
+      className="flex flex-col h-full bg-slate-50"
       data-testid="tools-sidebar"
     >
       <div className="p-3 border-b border-slate-200">
