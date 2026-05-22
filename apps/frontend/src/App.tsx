@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
+import { WelcomeScreen } from './components/Onboarding/WelcomeScreen'
 import { SetupWizard } from './components/Setup/SetupWizard'
 import { Workspace } from './components/Workspace/Workspace'
 
@@ -15,6 +16,9 @@ function App() {
   const [sidecarPort, setSidecarPort] = useState<number | null>(null)
   const [setupReady, setSetupReady] = useState(false)
   const [currentProject, setCurrentProject] = useState<Project | null>(null)
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return localStorage.getItem('groundtruth_onboarding_done') !== 'true'
+  })
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const handleSetupReady = useCallback(() => setSetupReady(true), [])
@@ -62,6 +66,16 @@ function App() {
 
   if (!setupReady) {
     return <SetupWizard onReady={handleSetupReady} sidecarPort={sidecarPort} />
+  }
+
+  if (!currentProject && showWelcome) {
+    return (
+      <WelcomeScreen 
+        sidecarPort={sidecarPort} 
+        onProjectCreated={(project) => setCurrentProject(project)} 
+        onSkip={() => setShowWelcome(false)} 
+      />
+    )
   }
 
   if (!currentProject) {

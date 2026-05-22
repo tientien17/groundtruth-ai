@@ -16,7 +16,7 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
-// Mock SetupWizard to a placeholder — avoids its own fetch calls
+// Mock SetupWizard to a placeholder
 vi.mock('./components/Setup/SetupWizard', () => ({
   SetupWizard: function MockSetupWizard() {
     return { $$typeof: Symbol.for('react.element'), type: 'div', props: { 'data-testid': 'setup-wizard' }, key: null, ref: null }
@@ -42,9 +42,10 @@ describe('App project creation', () => {
   afterEach(() => {
     document.body.innerHTML = ''
     vi.restoreAllMocks()
+    localStorage.clear()
   })
 
-  it('shows create project button when setup is ready and no project exists', async () => {
+  it('shows welcome screen button when setup is ready and no project exists', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -56,13 +57,13 @@ describe('App project creation', () => {
     const { container } = render(<App />)
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Create New Project')
-      expect(container.textContent).toContain('Connected to sidecar on port 8765')
+      expect(container.textContent).toContain('Create Project')
+      expect(container.textContent).toContain('GroundTruth Local')
     })
   })
 
   it('calls POST /projects on button click with correct URL and body', async () => {
-    const projectData = { id: 'proj-1', name: 'Project 5/22/2026', path: '/path/proj-1' }
+    const projectData = { id: 'proj-1', name: 'Project Demo', path: '/path/proj-1' }
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => projectData,
@@ -72,12 +73,13 @@ describe('App project creation', () => {
     const { container } = render(<App />)
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Create New Project')
+      expect(container.textContent).toContain('Create Project')
     })
 
-    const button = container.querySelector('button')
-    expect(button).toBeTruthy()
-    button?.click()
+    const buttons = Array.from(container.querySelectorAll('button'))
+    const createButton = buttons.find(b => b.textContent?.includes('Create Project'))
+    expect(createButton).toBeTruthy()
+    createButton?.click()
 
     await vi.waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -92,7 +94,7 @@ describe('App project creation', () => {
   })
 
   it('renders workspace after project creation succeeds', async () => {
-    const projectData = { id: 'proj-1', name: 'Project 5/22/2026', path: '/path/proj-1' }
+    const projectData = { id: 'proj-1', name: 'Project Demo', path: '/path/proj-1' }
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => projectData,
@@ -102,16 +104,17 @@ describe('App project creation', () => {
     const { container } = render(<App />)
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Create New Project')
+      expect(container.textContent).toContain('Create Project')
     })
 
-    const button = container.querySelector('button') as HTMLButtonElement
-    button?.click()
+    const buttons = Array.from(container.querySelectorAll('button'))
+    const createButton = buttons.find(b => b.textContent?.includes('Create Project'))
+    createButton?.click()
 
     await vi.waitFor(() => {
       expect(container.querySelector('[data-testid="workspace"]')).toBeTruthy()
       expect(container.textContent).toContain('Workspace: proj-1')
-      expect(container.textContent).not.toContain('Create New Project')
+      expect(container.textContent).not.toContain('Create Project')
     })
   })
 
@@ -126,15 +129,16 @@ describe('App project creation', () => {
     const { container } = render(<App />)
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Create New Project')
+      expect(container.textContent).toContain('Create Project')
     })
 
-    const button = container.querySelector('button') as HTMLButtonElement
-    button?.click()
+    const buttons = Array.from(container.querySelectorAll('button'))
+    const createButton = buttons.find(b => b.textContent?.includes('Create Project'))
+    createButton?.click()
 
     await vi.waitFor(() => {
       expect(container.textContent).toContain('Failed to create project (500)')
-      expect(container.textContent).toContain('Create New Project')
+      expect(container.textContent).toContain('Create Project')
     })
   })
 })
