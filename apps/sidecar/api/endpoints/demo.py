@@ -1,6 +1,8 @@
 """Demo project loader endpoint."""
 from __future__ import annotations
 
+from pathlib import Path
+import shutil
 from uuid import uuid4
 
 from fastapi import APIRouter, Request
@@ -25,6 +27,17 @@ async def load_demo_project(request: Request) -> DemoProjectResponse:
     settings = request.app.state.settings
     project_name = "Demo Project"
     project_dir = create_project(name=project_name, path=settings.storage_path)
+
+    # Copy fixture PDF into the project's documents/originals directory
+    # so Document.original_path points to a real file.
+    fixture_pdf = Path(__file__).parents[4] / "fixtures" / "sample-project" / "small-floor-plan.pdf"
+    originals_dir = project_dir / "documents" / "originals"
+    originals_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        shutil.copy2(fixture_pdf, originals_dir / "Sample Floor Plan.pdf")
+    except FileNotFoundError:
+        print(f"Warning: fixture PDF not found at {fixture_pdf}")
+
     db_path = project_dir / "project.sqlite"
 
     project_id = uuid4()
