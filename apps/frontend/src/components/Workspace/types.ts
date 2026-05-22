@@ -46,6 +46,10 @@ export interface SheetsSidebarProps {
   onSelectSheet: (sheetId: string) => void
   /** Whether sheets are loading */
   loading?: boolean
+  /** Callback to trigger PDF upload */
+  onUploadPdf?: () => void
+  /** Callback to trigger demo project load */
+  onLoadDemo?: () => void
 }
 
 export interface ToolsSidebarProps {

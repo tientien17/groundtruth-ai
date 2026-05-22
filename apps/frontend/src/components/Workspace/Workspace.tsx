@@ -5,13 +5,14 @@
 // biome-ignore assist/source/organizeImports: Existing import order follows project ESLint conventions.
 import type { SheetSummary } from '../Library/types'
 import type { TakeoffItem, ToolType, WorkspaceProps } from './types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { ChatPanel } from '../Copilot/ChatPanel'
 import { fetchSheets } from '../Library/api'
 import { QuantityTable } from '../Takeoff/QuantityTable'
 import { SheetViewer } from './SheetViewer'
 import { SheetsSidebar } from './SheetsSidebar'
 import { ToolsSidebar } from './ToolsSidebar'
+import { DragDropZone } from './DragDropZone'
 import { CandidateReview } from '../Search/CandidateReview'
 import type { TextSearchCandidate } from '../Search/TextSearchTool'
 
@@ -24,6 +25,8 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
   const [takeoffItems, setTakeoffItems] = useState<TakeoffItem[]>([])
   const [searchCandidates, setSearchCandidates] = useState<TextSearchCandidate[]>([])
   const [reviewLoading, setReviewLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const buildTakeoffItemsUrl = useCallback((sheetId: string) => {
     const params = new URLSearchParams({ project_path: projectPath })
@@ -185,6 +188,36 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
     }
   }
 
+  const handleUploadPdf = async (file: File) => {
+    setIsUploading(true)
+    setSheetsError(null)
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const params = new URLSearchParams({ project_path: projectPath })
+      const res = await fetch(`http://127.0.0.1:${sidecarPort}/projects/${projectId}/documents?${params}`, {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!res.ok) {
+        throw new Error(`Upload failed: ${res.statusText}`)
+      }
+      
+      await loadSheets()
+    } catch (err) {
+      setSheetsError(err instanceof Error ? err.message : 'Failed to upload PDF')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
   const selectedSheet = sheets.find((s) => s.id === selectedSheetId) ?? null
 
   return (
@@ -199,6 +232,19 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
           selectedSheetId={selectedSheetId}
           onSelectSheet={setSelectedSheetId}
           loading={sheetsLoading}
+          onUploadPdf={handleUploadClick}
+        />
+        <input
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleUploadPdf(file)
+            if (e.target) e.target.value = ''
+          }}
+          disabled={isUploading}
         />
       </div>
 
@@ -210,31 +256,37 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
         />
       </div>
 
-      {/* Center: Sheet viewer */}
-      <div className="flex-1 min-w-0 relative">
-        <SheetViewer
-          projectId={projectId}
-          sheet={selectedSheet}
-          loading={sheetsLoading}
-          error={sheetsError}
-          sidecarPort={sidecarPort}
-          projectPath={projectPath}
-          activeTool={activeTool}
-          onDrawingComplete={handleDrawingComplete}
-          onCandidatesChange={setSearchCandidates}
-        />
-        
-        {/* Review Candidates Panel Overlay */}
-        {searchCandidates.length > 0 && (
-          <div className="absolute top-0 right-0 w-80 h-full z-20 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.1)]">
-            <CandidateReview 
-              candidates={searchCandidates}
-              onAccept={handleAcceptCandidate}
-              onReject={handleRejectCandidate}
-              onAcceptAll={handleAcceptAll}
-              disabled={reviewLoading}
+      {/* Center: Sheet viewer or Drop Zone */}
+      <div className="flex-1 min-w-0 relative flex flex-col">
+        {!sheetsLoading && sheets.length === 0 ? (
+          <DragDropZone onUploadPdf={handleUploadPdf} isUploading={isUploading} />
+        ) : (
+          <>
+            <SheetViewer
+              projectId={projectId}
+              sheet={selectedSheet}
+              loading={sheetsLoading}
+              error={sheetsError}
+              sidecarPort={sidecarPort}
+              projectPath={projectPath}
+              activeTool={activeTool}
+              onDrawingComplete={handleDrawingComplete}
+              onCandidatesChange={setSearchCandidates}
             />
-          </div>
+            
+            {/* Review Candidates Panel Overlay */}
+            {searchCandidates.length > 0 && (
+              <div className="absolute top-0 right-0 w-80 h-full z-20 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.1)]">
+                <CandidateReview 
+                  candidates={searchCandidates}
+                  onAccept={handleAcceptCandidate}
+                  onReject={handleRejectCandidate}
+                  onAcceptAll={handleAcceptAll}
+                  disabled={reviewLoading}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 

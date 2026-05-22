@@ -4,7 +4,7 @@
 
 import type { SheetsSidebarProps } from './types'
 
-export function SheetsSidebar({ sheets, selectedSheetId, onSelectSheet, loading }: SheetsSidebarProps) {
+export function SheetsSidebar({ sheets, selectedSheetId, onSelectSheet, loading, onUploadPdf, onLoadDemo }: SheetsSidebarProps) {
   return (
     <div
       className="flex flex-col h-full bg-slate-50 border-r border-slate-200"
@@ -27,8 +27,26 @@ export function SheetsSidebar({ sheets, selectedSheetId, onSelectSheet, loading 
             Loading sheets...
           </div>
         ) : sheets.length === 0 ? (
-          <div className="p-4 text-center text-slate-400 text-sm">
-            No sheets found
+          <div className="p-4 flex flex-col items-center justify-center h-full text-center space-y-4">
+            <div className="text-slate-400 text-sm mb-2">No sheets found</div>
+            {onUploadPdf && (
+              <button
+                type="button"
+                onClick={onUploadPdf}
+                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors flex items-center justify-center gap-2"
+              >
+                <span>📤</span> Upload PDF
+              </button>
+            )}
+            {onLoadDemo && (
+              <button
+                type="button"
+                onClick={onLoadDemo}
+                className="w-full py-2 px-4 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded transition-colors flex items-center justify-center gap-2"
+              >
+                <span>🎯</span> Try Sample Project
+              </button>
+            )}
           </div>
         ) : (
           <ul className="divide-y divide-slate-100">
