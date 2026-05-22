@@ -17,8 +17,10 @@ import { CandidateReview } from '../Search/CandidateReview'
 import type { TextSearchCandidate } from '../Search/TextSearchTool'
 import { WorkflowStepper } from './WorkflowStepper'
 import { AiAutoDetectButton } from './AiAutoDetectButton'
+import { CompareView } from './CompareView'
 
 export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId }: WorkspaceProps) {
+  const [showCompare, setShowCompare] = useState(false)
   const [sheets, setSheets] = useState<SheetSummary[]>([])
   const [sheetsLoading, setSheetsLoading] = useState(true)
   const [sheetsError, setSheetsError] = useState<string | null>(null)
@@ -253,6 +255,18 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
 
   const selectedSheet = sheets.find((s) => s.id === selectedSheetId) ?? null
 
+  if (showCompare) {
+    return (
+      <CompareView
+        sheets={sheets}
+        projectId={projectId}
+        projectPath={projectPath}
+        sidecarPort={sidecarPort}
+        onExit={() => setShowCompare(false)}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <WorkflowStepper 
@@ -264,7 +278,18 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
         data-testid="workspace"
       >
         {/* Left: Sheets sidebar */}
-        <div className="w-56 flex-shrink-0">
+        <div className="w-56 flex-shrink-0 flex flex-col">
+          {sheets.length >= 2 && (
+            <div className="p-2 border-b border-slate-200 bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setShowCompare(true)}
+                className="w-full px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors"
+              >
+                Compare Sheets
+              </button>
+            </div>
+          )}
         <SheetsSidebar
           sheets={sheets}
           selectedSheetId={selectedSheetId}
