@@ -1,0 +1,301 @@
+{
+  "schema_version": 2,
+  "active_work_id": "mvp-critical-blockers-34268078",
+  "works": {
+    "mvp-critical-blockers-34268078": {
+      "work_id": "mvp-critical-blockers-34268078",
+      "active_plan": "C:\\Users\\ADMIN\\Desktop\\LOUISE\\Repositories\\groundtruth-ai\\.omo\\plans\\mvp-critical-blockers.md",
+      "plan_name": "mvp-critical-blockers",
+      "status": "completed",
+      "started_at": "2026-05-22T06:05:46.767Z",
+      "updated_at": "2026-05-22T06:59:56.111Z",
+      "session_ids": [
+        "ses_1b1ebf253ffeuX6h4g0OrSnZsA"
+      ],
+      "session_origins": {
+        "ses_1b1ebf253ffeuX6h4g0OrSnZsA": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Add project CRUD endpoints (POST /projects + GET /projects)",
+          "session_id": "ses_1b1b547d6ffevh5zDf78KwHKO1",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-05-22T06:28:35.872Z",
+          "started_at": "2026-05-22T06:08:06.585Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:28:35.872Z",
+          "elapsed_ms": 1229287
+        },
+        "todo:4": {
+          "task_key": "todo:4",
+          "task_label": "4",
+          "task_title": "Wire App.tsx project creation to POST /projects",
+          "session_id": "ses_1b1a01f07ffeYwy39KTcaXxuM5",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-05-22T06:30:28.954Z",
+          "started_at": "2026-05-22T06:30:07.272Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:30:28.954Z",
+          "elapsed_ms": 21682
+        },
+        "todo:5": {
+          "task_key": "todo:5",
+          "task_label": "5",
+          "task_title": "Align TakeoffItem type and interface with backend",
+          "session_id": "ses_1b19ef28affeEojNnWmZxfr46g",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-05-22T06:32:49.548Z",
+          "started_at": "2026-05-22T06:32:08.670Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:32:49.548Z",
+          "elapsed_ms": 40878
+        },
+        "todo:6": {
+          "task_key": "todo:6",
+          "task_label": "6",
+          "task_title": "Wire drawing tools to POST takeoff-items + load items from backend",
+          "session_id": "ses_1b19ac306ffearCp86Zp1dU4gs",
+          "agent": "Sisyphus-Junior",
+          "category": "deep",
+          "started_at": "2026-05-22T06:35:04.956Z",
+          "status": "completed",
+          "updated_at": "2026-05-22T06:39:10.259Z",
+          "ended_at": "2026-05-22T06:39:10.258Z",
+          "elapsed_ms": 245302
+        },
+        "todo:7": {
+          "task_key": "todo:7",
+          "task_label": "7",
+          "task_title": "Backend tests for project + image endpoints",
+          "session_id": "ses_1b196df28ffeda2Gyi803exW0W",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-05-22T06:41:54.436Z",
+          "started_at": "2026-05-22T06:41:34.369Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:41:54.436Z",
+          "elapsed_ms": 20067
+        },
+        "todo:8": {
+          "task_key": "todo:8",
+          "task_label": "8",
+          "task_title": "Frontend tests for project creation + takeoff wiring",
+          "session_id": "ses_1b19479fbffeK6ch1Nywr7R1cR",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-05-22T06:51:14.455Z",
+          "started_at": "2026-05-22T06:50:49.363Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:51:14.453Z",
+          "elapsed_ms": 25090
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan Compliance Audit — Verify all Must Haves are implemented, all Must NOT Haves are absent, and all evidence files exist.",
+          "session_id": "ses_1b18be825ffe2NQpeAiqax6x2M",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-low",
+          "updated_at": "2026-05-22T06:53:52.136Z",
+          "started_at": "2026-05-22T06:53:45.909Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:53:52.136Z",
+          "elapsed_ms": 6227
+        },
+        "final-wave:f2": {
+          "task_key": "final-wave:f2",
+          "task_label": "F2",
+          "task_title": "Code Quality Review — Run typecheck, lint, tests. Review all changed files for anti-patterns.",
+          "session_id": "ses_1b1899e70ffeBO8iAtD6TtS26Y",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-low",
+          "updated_at": "2026-05-22T06:55:52.365Z",
+          "started_at": "2026-05-22T06:55:48.010Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:55:52.365Z",
+          "elapsed_ms": 4355
+        },
+        "final-wave:f3": {
+          "task_key": "final-wave:f3",
+          "task_label": "F3",
+          "task_title": "Real Manual QA — Execute key QA scenarios from the plan against the running sidecar. Start from clean state and verify end-to-end flows.",
+          "session_id": "ses_1b187bee0ffeSPFWy5TswhbwXD",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-low",
+          "updated_at": "2026-05-22T06:57:33.657Z",
+          "started_at": "2026-05-22T06:57:28.976Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:57:33.657Z",
+          "elapsed_ms": 4681
+        },
+        "final-wave:f4": {
+          "task_key": "final-wave:f4",
+          "task_label": "F4",
+          "task_title": "Scope Fidelity Check — For each task in the plan, read \"What to do\" and compare with actual git diff. Verify 1:1 match — everything in spec was built (no missing), nothing beyond spec was built (no creep).",
+          "session_id": "ses_1b18631e8ffeZtYM0P38uy46F4",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-low",
+          "updated_at": "2026-05-22T06:59:37.269Z",
+          "started_at": "2026-05-22T06:59:17.345Z",
+          "status": "completed",
+          "ended_at": "2026-05-22T06:59:37.269Z",
+          "elapsed_ms": 19924
+        }
+      },
+      "ended_at": "2026-05-22T06:59:56.111Z",
+      "elapsed_ms": 3249344
+    }
+  },
+  "active_plan": "C:\\Users\\ADMIN\\Desktop\\LOUISE\\Repositories\\groundtruth-ai\\.omo\\plans\\mvp-critical-blockers.md",
+  "started_at": "2026-05-22T06:05:46.767Z",
+  "status": "completed",
+  "updated_at": "2026-05-22T06:59:56.111Z",
+  "session_ids": [
+    "ses_1b1ebf253ffeuX6h4g0OrSnZsA"
+  ],
+  "session_origins": {
+    "ses_1b1ebf253ffeuX6h4g0OrSnZsA": "direct"
+  },
+  "plan_name": "mvp-critical-blockers",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Add project CRUD endpoints (POST /projects + GET /projects)",
+      "session_id": "ses_1b1b547d6ffevh5zDf78KwHKO1",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-22T06:28:35.872Z",
+      "started_at": "2026-05-22T06:08:06.585Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:28:35.872Z",
+      "elapsed_ms": 1229287
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "Wire App.tsx project creation to POST /projects",
+      "session_id": "ses_1b1a01f07ffeYwy39KTcaXxuM5",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-22T06:30:28.954Z",
+      "started_at": "2026-05-22T06:30:07.272Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:30:28.954Z",
+      "elapsed_ms": 21682
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "Align TakeoffItem type and interface with backend",
+      "session_id": "ses_1b19ef28affeEojNnWmZxfr46g",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-22T06:32:49.548Z",
+      "started_at": "2026-05-22T06:32:08.670Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:32:49.548Z",
+      "elapsed_ms": 40878
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "Wire drawing tools to POST takeoff-items + load items from backend",
+      "session_id": "ses_1b19ac306ffearCp86Zp1dU4gs",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "started_at": "2026-05-22T06:35:04.956Z",
+      "status": "completed",
+      "updated_at": "2026-05-22T06:39:10.259Z",
+      "ended_at": "2026-05-22T06:39:10.258Z",
+      "elapsed_ms": 245302
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "Backend tests for project + image endpoints",
+      "session_id": "ses_1b196df28ffeda2Gyi803exW0W",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-22T06:41:54.436Z",
+      "started_at": "2026-05-22T06:41:34.369Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:41:54.436Z",
+      "elapsed_ms": 20067
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "Frontend tests for project creation + takeoff wiring",
+      "session_id": "ses_1b19479fbffeK6ch1Nywr7R1cR",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-22T06:51:14.455Z",
+      "started_at": "2026-05-22T06:50:49.363Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:51:14.453Z",
+      "elapsed_ms": 25090
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "Plan Compliance Audit — Verify all Must Haves are implemented, all Must NOT Haves are absent, and all evidence files exist.",
+      "session_id": "ses_1b18be825ffe2NQpeAiqax6x2M",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-low",
+      "updated_at": "2026-05-22T06:53:52.136Z",
+      "started_at": "2026-05-22T06:53:45.909Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:53:52.136Z",
+      "elapsed_ms": 6227
+    },
+    "final-wave:f2": {
+      "task_key": "final-wave:f2",
+      "task_label": "F2",
+      "task_title": "Code Quality Review — Run typecheck, lint, tests. Review all changed files for anti-patterns.",
+      "session_id": "ses_1b1899e70ffeBO8iAtD6TtS26Y",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-low",
+      "updated_at": "2026-05-22T06:55:52.365Z",
+      "started_at": "2026-05-22T06:55:48.010Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:55:52.365Z",
+      "elapsed_ms": 4355
+    },
+    "final-wave:f3": {
+      "task_key": "final-wave:f3",
+      "task_label": "F3",
+      "task_title": "Real Manual QA — Execute key QA scenarios from the plan against the running sidecar. Start from clean state and verify end-to-end flows.",
+      "session_id": "ses_1b187bee0ffeSPFWy5TswhbwXD",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-low",
+      "updated_at": "2026-05-22T06:57:33.657Z",
+      "started_at": "2026-05-22T06:57:28.976Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:57:33.657Z",
+      "elapsed_ms": 4681
+    },
+    "final-wave:f4": {
+      "task_key": "final-wave:f4",
+      "task_label": "F4",
+      "task_title": "Scope Fidelity Check — For each task in the plan, read \"What to do\" and compare with actual git diff. Verify 1:1 match — everything in spec was built (no missing), nothing beyond spec was built (no creep).",
+      "session_id": "ses_1b18631e8ffeZtYM0P38uy46F4",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-low",
+      "updated_at": "2026-05-22T06:59:37.269Z",
+      "started_at": "2026-05-22T06:59:17.345Z",
+      "status": "completed",
+      "ended_at": "2026-05-22T06:59:37.269Z",
+      "elapsed_ms": 19924
+    }
+  },
+  "agent": "atlas",
+  "ended_at": "2026-05-22T06:59:56.111Z",
+  "elapsed_ms": 3249344
+}
