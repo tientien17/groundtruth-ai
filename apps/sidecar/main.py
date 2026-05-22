@@ -11,6 +11,7 @@ from api.endpoints.ai_config import router as ai_config_router
 from api.endpoints.auto_detect import router as auto_detect_router
 from api.endpoints.classifications import router as classifications_router
 from api.endpoints.copilot import router as copilot_router  # type: ignore[reportMissingImports]
+from api.endpoints.demo import demo_router
 from api.endpoints.documents import router as documents_router
 from api.endpoints.export import router as export_router  # type: ignore[reportMissingImports]
 from api.endpoints.projects import router as projects_router
@@ -72,6 +73,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auto_detect_router)
     app.include_router(classifications_router)
     app.include_router(copilot_router)
+    app.include_router(demo_router)
     app.include_router(documents_router)
     app.include_router(export_router)
     app.include_router(projects_router)
