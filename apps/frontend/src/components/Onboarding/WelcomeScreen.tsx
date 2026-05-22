@@ -8,6 +8,7 @@ export interface WelcomeScreenProps {
 
 export function WelcomeScreen({ sidecarPort, onProjectCreated, onSkip }: WelcomeScreenProps) {
   const [creating, setCreating] = useState(false)
+  const [loadingDemo, setLoadingDemo] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleCreateProject = async () => {
@@ -38,10 +39,24 @@ export function WelcomeScreen({ sidecarPort, onProjectCreated, onSkip }: Welcome
     onSkip()
   }
 
-  const handleDemo = () => {
-    // Demo flow not yet implemented, but needs loading state per requirements
-    // We'll just set an error for now to show interaction
-    setError('Demo project loading not yet implemented.')
+  const handleDemo = async () => {
+    setLoadingDemo(true)
+    setError(null)
+    try {
+      const res = await fetch(`http://127.0.0.1:${sidecarPort}/demo/load`, {
+        method: 'POST',
+      })
+      if (!res.ok) throw new Error(`Failed to load demo project (${res.status})`)
+      const data = await res.json()
+      
+      // Set the flag
+      localStorage.setItem('groundtruth_onboarding_done', 'true')
+      
+      onProjectCreated({ id: data.id, path: data.path, name: data.name })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load demo project')
+      setLoadingDemo(false) // Only reset on failure to prevent flicker
+    }
   }
 
   return (
@@ -110,10 +125,10 @@ export function WelcomeScreen({ sidecarPort, onProjectCreated, onSkip }: Welcome
           <button
             type="button"
             onClick={handleDemo}
-            disabled={creating}
+            disabled={creating || loadingDemo}
             className="btn btn-secondary px-8 py-3 text-lg w-full max-w-sm"
           >
-            Load Sample Demo
+            {loadingDemo ? 'Loading...' : 'Load Sample Demo'}
           </button>
           
           <button

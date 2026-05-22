@@ -193,16 +193,32 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
     }
   }
 
+  const handleLoadDemo = async () => {
+    setSheetsLoading(true)
+    setSheetsError(null)
+    try {
+      const res = await fetch(`http://127.0.0.1:${sidecarPort}/demo/load`, {
+        method: 'POST',
+      })
+      if (!res.ok) throw new Error(`Failed to load demo project (${res.status})`)
+      await loadSheets()
+    } catch (err) {
+      setSheetsError(err instanceof Error ? err.message : 'Failed to load demo project')
+    } finally {
+      setSheetsLoading(false)
+    }
+  }
+
   const handleUploadPdf = async (file: File) => {
     setIsUploading(true)
     setSheetsError(null)
     
     try {
       const formData = new FormData()
+      formData.append('project_path', projectPath)
       formData.append('file', file)
       
-      const params = new URLSearchParams({ project_path: projectPath })
-      const res = await fetch(`http://127.0.0.1:${sidecarPort}/projects/${projectId}/documents?${params}`, {
+      const res = await fetch(`http://127.0.0.1:${sidecarPort}/projects/${projectId}/ingest`, {
         method: 'POST',
         body: formData,
       })
@@ -247,7 +263,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
       
       setSearchCandidates(prev => [...prev, ...candidates])
     } catch (err) {
-      console.error('Auto-detect error:', err)
+      setSheetsError(err instanceof Error ? err.message : 'Auto-detect failed')
     } finally {
       setIsAutoDetecting(false)
     }
@@ -296,6 +312,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
           onSelectSheet={setSelectedSheetId}
           loading={sheetsLoading}
           onUploadPdf={handleUploadClick}
+          onLoadDemo={handleLoadDemo}
         />
         <input
           type="file"
