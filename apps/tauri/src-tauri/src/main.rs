@@ -122,9 +122,9 @@ fn start_sidecar(app: &tauri::App) -> Result<SidecarState, Box<dyn std::error::E
 
     std::fs::create_dir_all(&storage_path)?;
 
-    let mut command = Command::new(python_executable());
+    let mut command = Command::new(sidecar_runner());
     command
-        .arg("-m")
+        .arg("run")
         .arg("uvicorn")
         .arg("main:app")
         .arg("--host")
@@ -198,10 +198,6 @@ fn cleanup_sidecar(state: &SidecarState) {
     }
 }
 
-fn python_executable() -> &'static str {
-    if cfg!(windows) {
-        "python"
-    } else {
-        "python3"
-    }
+fn sidecar_runner() -> &'static str {
+    "uv"
 }

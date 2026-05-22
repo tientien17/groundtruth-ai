@@ -3,8 +3,9 @@
 ## Runtime Dependencies
 The following must be installed on your system:
 
-1. **Rust**: Required for Tauri.
+1. **Rust** (rustc + cargo): Required for the Tauri desktop shell (`apps/tauri`).
    - Install via [rustup.rs](https://rustup.rs/).
+   - Without it, `pnpm dev` will fail on the Tauri workspace. Run frontend and sidecar independently instead.
 2. **Node.js & pnpm**: Frontend and build management.
    - Node.js 18+ recommended.
    - `npm install -g pnpm`

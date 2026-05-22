@@ -48,6 +48,7 @@ root/
 ## COMMANDS
 
 ```bash
+pnpm bootstrap    # Full environment bootstrap (Rust, Node deps, Python sidecar)
 pnpm dev          # Run all workspaces in dev mode
 pnpm test         # Run all tests across workspaces
 pnpm build        # Build all workspaces
@@ -55,6 +56,20 @@ pnpm bundle       # Full installer build (frontend → resources → sidecar →
 pnpm lint         # Lint all workspaces
 pnpm typecheck    # TypeScript type checking (tsc --noEmit)
 ```
+
+## PREREQUISITES
+
+The following toolchains must be installed on the system:
+
+| Tool | Required By | Install |
+|------|-------------|---------|
+| **Rust** (rustc + cargo) | Tauri desktop shell | [rustup.rs](https://rustup.rs/) |
+| **Node.js 20+** + **pnpm 9+** | Frontend & monorepo build | `npm install -g pnpm` |
+| **Python 3.11+** + **uv** | Sidecar backend service | [astral.sh/uv](https://astral.sh/uv) |
+| **Ollama** | Local AI inference | [ollama.com](https://ollama.com/) |
+| **Tesseract OCR** | PDF text extraction | See `docs/INSTALL.md` |
+
+Without Rust, `pnpm dev` will fail on the `@groundtruth/tauri` workspace. You can still run the frontend (`apps/frontend`) and sidecar (`apps/sidecar`) independently.
 
 ## NOTES
 

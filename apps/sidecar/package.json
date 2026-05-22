@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "python -m uvicorn main:app --reload --port 8765",
+    "dev": "uv run uvicorn main:app --reload --port 8765",
     "start": "python -m uvicorn main:app --host 127.0.0.1 --port 0",
     "test": "pytest || echo 'pytest not installed, skipping'",
     "lint": "ruff check . || echo 'ruff not installed, skipping'",

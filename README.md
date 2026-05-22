@@ -31,11 +31,13 @@ civils-local-ai/
 
 ### Prerequisites
 
-1. **Rust** (via [rustup.rs](https://rustup.rs/))
+1. **Rust** (via [rustup.rs](https://rustup.rs/)) — required for the Tauri desktop shell
 2. **Node.js 20+** and **pnpm 9+**
 3. **Python 3.11+** with **uv** ([astral.sh/uv](https://astral.sh/uv))
 4. **Ollama** ([ollama.com](https://ollama.com/))
 5. **Tesseract OCR** (see [docs/INSTALL.md](docs/INSTALL.md))
+
+> **Note:** Without Rust, `pnpm dev` will fail on the `@groundtruth/tauri` workspace. You can still run the frontend and sidecar independently (see commands below).
 
 ### Installation
 
@@ -62,11 +64,22 @@ ollama pull nomic-embed-text
 pnpm --filter @groundtruth/tauri tauri dev
 ```
 
+### Bootstrap
+
+```bash
+# One-command bootstrap: installs Rust, Node deps, and Python sidecar
+pnpm bootstrap
+```
+
 ### Development Commands
 
 ```bash
-# Run all workspaces in dev mode
+# Run all workspaces in dev mode (requires Rust for Tauri)
 pnpm dev
+
+# Run just the frontend + sidecar (no Rust needed)
+pnpm --filter @groundtruth/frontend dev    # http://127.0.0.1:3000
+pnpm --filter @groundtruth/sidecar dev     # http://127.0.0.1:8765
 
 # Run linting across all workspaces
 pnpm lint

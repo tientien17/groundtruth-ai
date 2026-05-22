@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tauri dev",
+    "dev": "pwsh -NoProfile -File tauri-dev.ps1",
     "build": "tauri build",
     "clean": "tauri clean",
     "lint": "echo 'No lint for Tauri (Rust handles this)'",
