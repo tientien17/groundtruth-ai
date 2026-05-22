@@ -21,9 +21,14 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
   const [sheetsError, setSheetsError] = useState<string | null>(null)
   const [selectedSheetId, setSelectedSheetId] = useState<string | null>(initialSheetId ?? null)
   const [activeTool, setActiveTool] = useState<ToolType>('select')
-  const [takeoffItems] = useState<TakeoffItem[]>([]) // Will be populated by drawing tools in T14
+  const [takeoffItems, setTakeoffItems] = useState<TakeoffItem[]>([])
   const [searchCandidates, setSearchCandidates] = useState<TextSearchCandidate[]>([])
   const [reviewLoading, setReviewLoading] = useState(false)
+
+  const buildTakeoffItemsUrl = useCallback((sheetId: string) => {
+    const params = new URLSearchParams({ project_path: projectPath })
+    return `http://127.0.0.1:${sidecarPort}/projects/${projectId}/sheets/${sheetId}/takeoff-items?${params}`
+  }, [sidecarPort, projectId, projectPath])
 
   // Load sheets
   const loadSheets = useCallback(async () => {
@@ -51,6 +56,60 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
     loadSheets()
   }, [loadSheets])
 
+  const loadTakeoffItems = useCallback(async (sheetId: string | null) => {
+    if (!sheetId) {
+      setTakeoffItems([])
+      return
+    }
+
+    const res = await fetch(buildTakeoffItemsUrl(sheetId))
+    if (!res.ok) {
+      throw new Error(`Failed to load takeoff items: ${res.status}`)
+    }
+    setTakeoffItems(await res.json() as TakeoffItem[])
+  }, [buildTakeoffItemsUrl])
+
+  useEffect(() => {
+    void loadTakeoffItems(selectedSheetId).catch(() => setTakeoffItems([]))
+  }, [loadTakeoffItems, selectedSheetId])
+
+  const handleDrawingComplete = useCallback(async (points: Array<{ x: number; y: number }>, tool: ToolType) => {
+    if (!selectedSheetId) return
+
+    const typeByTool: Partial<Record<ToolType, TakeoffItem['type']>> = {
+      'measure-length': 'linear',
+      'measure-area': 'area',
+      count: 'count',
+    }
+    const kindByTool: Partial<Record<ToolType, 'path' | 'polygon' | 'point'>> = {
+      'measure-length': 'path',
+      'measure-area': 'polygon',
+      count: 'point',
+    }
+    const type = typeByTool[tool]
+    const kind = kindByTool[tool]
+    if (!type || !kind) return
+
+    const res = await fetch(buildTakeoffItemsUrl(selectedSheetId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        source: 'manual',
+        geometry: {
+          kind,
+          points,
+          scale: 1,
+          scale_unit: 'ft'
+        }
+      })
+    })
+    if (!res.ok) {
+      throw new Error(`Failed to create takeoff item: ${res.status}`)
+    }
+    await loadTakeoffItems(selectedSheetId)
+  }, [buildTakeoffItemsUrl, loadTakeoffItems, selectedSheetId])
+
   const handleAcceptCandidate = async (candidate: TextSearchCandidate) => {
     if (!selectedSheetId) return
     setReviewLoading(true)
@@ -76,6 +135,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
       })
       if (res.ok) {
         setSearchCandidates(prev => prev.filter(c => c !== candidate))
+        await loadTakeoffItems(selectedSheetId)
       }
     } finally {
       setReviewLoading(false)
@@ -118,6 +178,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
 
       if (res.ok) {
         setSearchCandidates(prev => prev.filter(c => c.sheet_id !== selectedSheetId))
+        await loadTakeoffItems(selectedSheetId)
       }
     } finally {
       setReviewLoading(false)
@@ -158,6 +219,8 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
           error={sheetsError}
           sidecarPort={sidecarPort}
           projectPath={projectPath}
+          activeTool={activeTool}
+          onDrawingComplete={handleDrawingComplete}
           onCandidatesChange={setSearchCandidates}
         />
         

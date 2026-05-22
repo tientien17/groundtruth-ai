@@ -29,6 +29,10 @@ export interface SheetViewerProps {
   sidecarPort: number
   /** Project path for resolving sheet paths */
   projectPath: string
+  /** Currently active workspace tool */
+  activeTool?: ToolType
+  /** Callback when manual drawing is completed */
+  onDrawingComplete?: (points: Array<{ x: number; y: number }>, tool: ToolType) => void
   /** Callback when search candidates change */
   onCandidatesChange?: (candidates: TextSearchCandidate[]) => void
 }

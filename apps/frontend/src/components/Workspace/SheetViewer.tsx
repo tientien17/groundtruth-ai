@@ -16,7 +16,7 @@ interface Point {
   y: number
 }
 
-export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, projectPath, onCandidatesChange }: SheetViewerProps) {
+export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, projectPath, activeTool = 'select', onDrawingComplete, onCandidatesChange }: SheetViewerProps) {
   const viewer = useViewer({
     minZoom: 0.1,
     maxZoom: 10,
@@ -36,6 +36,8 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
     onCandidatesChange?.(newCandidates)
   }
   const [visualSearchStatus, setVisualSearchStatus] = useState<string>('Draw search box')
+  const canVisualSearch = activeTool === 'select' || activeTool === 'pan'
+  const canDraw = activeTool === 'measure-length' || activeTool === 'measure-area' || activeTool === 'count'
 
   // Build full-res image URL if available
   const imageUrl = sheet?.thumbnail_url
@@ -75,6 +77,39 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
       setCandidates([])
       setVisualSearchStatus(err instanceof Error ? err.message : 'Visual search failed')
     }
+  }
+
+  const handleDrawingClick = (clientX: number, clientY: number) => {
+    if (!canDraw) {
+      return
+    }
+    const point = getImagePoint(clientX, clientY)
+    if (!point) {
+      return
+    }
+    if (activeTool === 'count') {
+      onDrawingComplete?.([point], activeTool)
+      drawingHistory.reset([])
+      return
+    }
+    drawingHistory.set((current) => [...current, point])
+  }
+
+  const handleDrawingDoubleClick = (clientX: number, clientY: number) => {
+    if (activeTool !== 'measure-length' && activeTool !== 'measure-area') {
+      return
+    }
+    const point = getImagePoint(clientX, clientY)
+    const lastPoint = points[points.length - 1]
+    const completedPoints = point && (!lastPoint || lastPoint.x !== point.x || lastPoint.y !== point.y)
+      ? [...points, point]
+      : points
+    const minimumPoints = activeTool === 'measure-area' ? 3 : 2
+    if (completedPoints.length < minimumPoints) {
+      return
+    }
+    onDrawingComplete?.(completedPoints, activeTool)
+    drawingHistory.reset([])
   }
 
   if (loading) {
@@ -196,6 +231,9 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
         className="absolute inset-0 flex items-center justify-center"
         style={{ transform: viewer.transform, transformOrigin: 'center' }}
         onMouseDown={(e) => {
+          if (!canVisualSearch) {
+            return
+          }
           const point = getImagePoint(e.clientX, e.clientY)
           if (point) {
             setDragStart(point)
@@ -203,6 +241,9 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
           }
         }}
         onMouseMove={(e) => {
+          if (!canVisualSearch) {
+            return
+          }
           if (!dragStart) {
             return
           }
@@ -212,6 +253,10 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
           }
         }}
         onMouseUp={(e) => {
+          if (!canVisualSearch) {
+            handleDrawingClick(e.clientX, e.clientY)
+            return
+          }
           if (!dragStart) {
             return
           }
@@ -225,6 +270,9 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
           if (bbox.x1 - bbox.x0 >= 4 && bbox.y1 - bbox.y0 >= 4) {
             void runVisualSearch(bbox)
           }
+        }}
+        onDoubleClick={(e) => {
+          handleDrawingDoubleClick(e.clientX, e.clientY)
         }}
       >
         {imageUrl ? (
