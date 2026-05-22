@@ -335,7 +335,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
 
       {/* Right: Copilot, quantity table, and export controls */}
       <div className="flex w-96 flex-shrink-0 flex-col border-l border-slate-200">
-        <div className="min-h-0 flex-1">
+        <div className="flex-1 min-h-0 flex flex-col">
           <ChatPanel
             projectId={projectId}
             projectPath={projectPath}
@@ -343,7 +343,7 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
             onSelectSheet={setSelectedSheetId}
           />
         </div>
-        <div className="h-1/2 min-h-0">
+        <div className="h-1/3 min-h-0 border-t border-slate-200">
           <QuantityTable
             items={takeoffItems}
             projectId={projectId}

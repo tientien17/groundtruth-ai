@@ -26,7 +26,7 @@ describe('ChatPanel', () => {
     await vi.waitFor(() => {
       expect(container.querySelector('[data-testid="copilot-chat"]')).toBeTruthy()
       expect(container.textContent).toContain('Answers only from indexed PDFs.')
-      expect(container.textContent).toContain('Ask Copilot')
+      expect(container.querySelector('button[type="submit"]')).toBeTruthy()
     })
   })
 
@@ -59,15 +59,15 @@ describe('ChatPanel', () => {
       />,
     )
 
-    await vi.waitFor(() => expect(container.querySelector('textarea')).toBeTruthy())
-    const textarea = container.querySelector('textarea') as HTMLTextAreaElement
+    await vi.waitFor(() => expect(container.querySelector('input[type="text"]')).toBeTruthy())
+    const input = container.querySelector('input[type="text"]') as HTMLInputElement
     await act(async () => {
       const valueSetter = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
+        HTMLInputElement.prototype,
         'value',
       )?.set
-      valueSetter?.call(textarea, 'Where is headwall?')
-      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+      valueSetter?.call(input, 'Where is headwall?')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
     })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => {
@@ -80,7 +80,7 @@ describe('ChatPanel', () => {
       expect(container.textContent).toContain('Page 3')
     })
 
-    ;(container.querySelector('button[type="button"]') as HTMLButtonElement).click()
+    ;(container.querySelectorAll('button[type="button"]')[1] as HTMLButtonElement).click()
     expect(onSelectSheet).toHaveBeenCalledWith('sheet-1')
   })
 })
