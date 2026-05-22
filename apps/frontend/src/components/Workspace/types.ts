@@ -62,15 +62,25 @@ export interface TakeoffItemsSidebarProps {
 
 export type ToolType = 'select' | 'pan' | 'measure-length' | 'measure-area' | 'count'
 
+export interface TakeoffGeometry {
+  id: string
+  kind: 'point' | 'path' | 'polygon'
+  points: Array<{ x: number; y: number }>
+  holes: Array<Array<{ x: number; y: number }>>
+  scale: number
+  scale_unit: string
+}
+
 export interface TakeoffItem {
   id: string
-  label: string
-  type: 'length' | 'area' | 'count'
-  value: number
-  unit: string
-  sheetId: string
-  color: string
-  classification?: string
-  formula?: string
-  finalQuantity?: number
+  sheet_id: string
+  classification_id: string | null
+  type: 'linear' | 'area' | 'count'
+  source: string
+  confidence: number | null
+  scale_id: string | null
+  quantity_raw: number | null
+  quantity_unit: string | null
+  created_by: string
+  geometry: TakeoffGeometry | null
 }

@@ -15,6 +15,8 @@ function App() {
   const [sidecarPort, setSidecarPort] = useState<number | null>(null)
   const [setupReady, setSetupReady] = useState(false)
   const [currentProject, setCurrentProject] = useState<Project | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const handleSetupReady = useCallback(() => setSetupReady(true), [])
 
   useEffect(() => {
@@ -72,17 +74,36 @@ function App() {
           <p className="text-gray-600 mb-4">
             Create a new project to start importing PDFs and performing takeoff.
           </p>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+              {error}
+            </div>
+          )}
           <button
             type="button"
-            onClick={() => {
-              const projectId = crypto.randomUUID()
-              const projectName = `Project ${new Date().toLocaleDateString()}`
-              const projectPath = `./projects/${projectId}`
-              setCurrentProject({ id: projectId, path: projectPath, name: projectName })
+            onClick={async () => {
+              setCreating(true)
+              setError(null)
+              try {
+                const projectName = `Project ${new Date().toLocaleDateString()}`
+                const res = await fetch(`http://127.0.0.1:${sidecarPort}/projects`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: projectName }),
+                })
+                if (!res.ok) throw new Error(`Failed to create project (${res.status})`)
+                const data = await res.json()
+                setCurrentProject({ id: data.id, path: data.path, name: data.name })
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to create project')
+              } finally {
+                setCreating(false)
+              }
             }}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={creating}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create New Project
+            {creating ? 'Creating…' : 'Create New Project'}
           </button>
         </div>
       </div>

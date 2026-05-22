@@ -5,7 +5,7 @@
 import type { TakeoffItemsSidebarProps } from './types'
 
 const TYPE_ICONS: Record<string, string> = {
-  length: '📏',
+  linear: '📏',
   area: '⬛',
   count: '#',
 }
@@ -46,15 +46,15 @@ export function TakeoffItemsSidebar({ items, onSelectItem, selectedItemId }: Tak
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-sm flex-shrink-0"
-                      style={{ backgroundColor: item.color }}
+                      style={{ backgroundColor: '#3b82f6' }}
                     />
                     <span className="text-lg">{TYPE_ICONS[item.type] || '?'}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-700 truncate">
-                        {item.label}
+                        {item.classification_id ?? item.id}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {item.value.toLocaleString()} {item.unit}
+                        {(item.quantity_raw ?? 0).toLocaleString()} {item.quantity_unit ?? ''}
                       </p>
                     </div>
                   </div>

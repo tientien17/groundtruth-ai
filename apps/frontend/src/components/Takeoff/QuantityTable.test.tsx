@@ -11,25 +11,29 @@ import { QuantityTable } from './QuantityTable'
 const items: TakeoffItem[] = [
   {
     id: 'wall-1',
-    label: 'Wall Length',
-    type: 'length',
-    value: 100,
-    unit: 'ft',
-    sheetId: 'sheet-1',
-    color: '#2563eb',
-    classification: 'Walls',
-    formula: 'QTY * 1.1',
-    finalQuantity: 110,
+    sheet_id: 'sheet-1',
+    classification_id: 'Walls',
+    type: 'linear',
+    source: 'manual',
+    confidence: null,
+    scale_id: null,
+    quantity_raw: 100,
+    quantity_unit: 'ft',
+    created_by: 'user',
+    geometry: null,
   },
   {
     id: 'door-1',
-    label: 'Door Count',
+    sheet_id: 'sheet-1',
+    classification_id: 'Doors',
     type: 'count',
-    value: 4,
-    unit: 'count',
-    sheetId: 'sheet-1',
-    color: '#16a34a',
-    classification: 'Doors',
+    source: 'manual',
+    confidence: null,
+    scale_id: null,
+    quantity_raw: 4,
+    quantity_unit: 'count',
+    created_by: 'user',
+    geometry: null,
   },
 ]
 
@@ -63,7 +67,7 @@ describe('QuantityTable', () => {
       expect(container.textContent).toContain('Doors')
       expect(container.textContent).toContain('Walls')
       expect(container.textContent).toContain('100')
-      expect(container.textContent).toContain('110 ft')
+      expect(container.textContent).toContain('100 ft')
     })
   })
 

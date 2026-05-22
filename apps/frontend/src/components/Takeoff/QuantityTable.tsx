@@ -76,8 +76,8 @@ export function QuantityTable({
                     <td className="px-3 py-2 text-slate-700">
                       {index === 0 ? classification : ''}
                     </td>
-                    <td className="px-3 py-2 text-slate-700">{formatNumber(item.value)}</td>
-                    <td className="px-3 py-2 text-slate-500">{item.unit}</td>
+                    <td className="px-3 py-2 text-slate-700">{formatNumber(item.quantity_raw ?? 0)}</td>
+                    <td className="px-3 py-2 text-slate-500">{item.quantity_unit ?? ''}</td>
                     <td className="px-3 py-2 text-slate-700">
                       {formatFormulaResult(item)}
                     </td>
@@ -95,7 +95,7 @@ export function QuantityTable({
 function groupByClassification(items: TakeoffItem[]): Array<[string, TakeoffItem[]]> {
   const groups = new Map<string, TakeoffItem[]>()
   for (const item of items) {
-    const classification = item.classification || item.label || 'Unclassified'
+    const classification = item.classification_id ?? 'Unclassified'
     groups.set(classification, [...(groups.get(classification) ?? []), item])
   }
   return Array.from(groups.entries()).sort(([left], [right]) => left.localeCompare(right))
@@ -120,10 +120,7 @@ function buildExportUrl({
 }
 
 function formatFormulaResult(item: TakeoffItem): string {
-  if (typeof item.finalQuantity === 'number') {
-    return `${formatNumber(item.finalQuantity)} ${item.unit}`
-  }
-  return `${formatNumber(item.value)} ${item.unit}`
+  return `${formatNumber(item.quantity_raw ?? 0)} ${item.quantity_unit ?? ''}`
 }
 
 function formatNumber(value: number): string {

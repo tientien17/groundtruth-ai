@@ -40,12 +40,16 @@ const mockSheets: SheetSummary[] = [
 const mockTakeoffItems: TakeoffItem[] = [
   {
     id: 'item-1',
-    label: 'Wall Length',
-    type: 'length',
-    value: 120.5,
-    unit: 'ft',
-    sheetId: 'sheet-1',
-    color: '#3b82f6',
+    sheet_id: 'sheet-1',
+    classification_id: null,
+    type: 'linear',
+    source: 'manual',
+    confidence: null,
+    scale_id: null,
+    quantity_raw: 120.5,
+    quantity_unit: 'ft',
+    created_by: 'user',
+    geometry: null,
   },
 ]
 
@@ -284,7 +288,7 @@ describe('TakeoffItemsSidebar', () => {
     const { container } = render(<TakeoffItemsSidebar items={mockTakeoffItems} />)
     await vi.waitFor(() => {
       expect(container.querySelector('[data-testid="takeoff-item-item-1"]')).toBeTruthy()
-      expect(container.textContent).toContain('Wall Length')
+      expect(container.textContent).toContain('item-1')
       expect(container.textContent).toContain('120.5 ft')
     })
   })
