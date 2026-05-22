@@ -54,3 +54,11 @@ changelog/**/*
 
 # Sisyphus agent runtime data
 .sisyphus/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Research / competitor screenshots
+civils-ai-landing.png
+civils-ai-pricing.png
+togal-ai-landing.png
