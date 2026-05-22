@@ -39,7 +39,7 @@ export function SheetViewer({ projectId, sheet, loading, error, sidecarPort, pro
 
   // Build full-res image URL if available
   const imageUrl = sheet?.thumbnail_url
-    ? `http://127.0.0.1:${sidecarPort}/projects/${sheet.document_id}/sheets/${sheet.id}/image?project_path=${encodeURIComponent(projectPath)}`
+    ? `http://127.0.0.1:${sidecarPort}/projects/${projectId}/sheets/${sheet.id}/image?project_path=${encodeURIComponent(projectPath)}`
     : null
 
   const getImagePoint = (clientX: number, clientY: number): Point | null => {

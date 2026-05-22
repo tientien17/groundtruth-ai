@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from database import get_session, init_db
@@ -71,7 +73,7 @@ async def list_sheets(
                     sheet_number=sheet.sheet_number,
                     sheet_title=sheet.sheet_title,
                     page_index=sheet.page_index,
-                    thumbnail_url=render.render_path if render else None,
+                    thumbnail_url=f"/projects/{project_id}/sheets/{sheet.id}/image?project_path={quote(project_path)}" if render else None,
                     sheet_metadata=sheet.sheet_metadata or {},
                 )
             )
@@ -111,3 +113,35 @@ async def update_sheet_metadata(
             sheet_title=sheet.sheet_title,
             sheet_metadata=sheet.sheet_metadata or {},
         )
+
+
+@router.get("/{project_id}/sheets/{sheet_id}/image")
+async def get_sheet_image(
+    project_id: UUID,
+    sheet_id: UUID,
+    project_path: str = Query(...),
+) -> FileResponse:
+    """Serve the rendered page PNG for a sheet."""
+    db_path = Path(project_path).expanduser().resolve() / "project.sqlite"
+    if not db_path.exists():
+        raise HTTPException(status_code=404, detail="Project database not found")
+
+    init_db(db_path)
+
+    with get_session(db_path) as session:
+        render = (
+            session.query(SheetRender)
+            .join(Sheet, SheetRender.sheet_id == Sheet.id)
+            .join(Sheet.document)
+            .filter(SheetRender.sheet_id == sheet_id, Sheet.document.has(project_id=project_id))
+            .first()
+        )
+
+        if render is None:
+            raise HTTPException(status_code=404, detail="Render not found")
+
+        render_path = Path(render.render_path)
+        if not render_path.is_file():
+            raise HTTPException(status_code=404, detail="Render file not found")
+
+        return FileResponse(render_path, media_type="image/png")

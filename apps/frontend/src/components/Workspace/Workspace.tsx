@@ -31,7 +31,11 @@ export function Workspace({ projectId, projectPath, sidecarPort, initialSheetId 
     setSheetsError(null)
     try {
       const data = await fetchSheets(sidecarPort, projectId, projectPath)
-      setSheets(data)
+      const withUrls = data.map(s => ({
+        ...s,
+        thumbnail_url: s.thumbnail_url ? `http://127.0.0.1:${sidecarPort}${s.thumbnail_url}` : null
+      }))
+      setSheets(withUrls)
       // Select first sheet if none selected
       if (!selectedSheetId && data.length > 0) {
         setSelectedSheetId(data[0].id)
